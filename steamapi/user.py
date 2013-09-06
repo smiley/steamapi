@@ -1,3 +1,4 @@
+from .core import SteamObject
 from .decorators import cached_property, INFINITE, MINUTE, HOUR
 from .app import SteamApp
 
@@ -6,27 +7,36 @@ __author__ = 'SmileyBarry'
 from .core import APIConnection
 
 
-class SteamUser(object):
+class SteamGroup(SteamObject):
+    def __init__(self, guid):
+        self._id = guid
+
+    @property
+    def guid(self):
+        return self._id
+
+
+class SteamUser(SteamObject):
     # OVERRIDES
-    def __init__(self, steam_userid=None, steam_userurl=None):
+    def __init__(self, userid=None, userurl=None):
         """
         Create a new instance of a Steam user. Use this object to retrieve details about
         that user.
 
-        :param steam_userid: The user's 64-bit SteamID. (Optional, unless steam_userurl isn't specified)
-        :param steam_userurl: The user's vanity URL-ending name. (Required if "steam_userid" isn't specified,
+        :param userid: The user's 64-bit SteamID. (Optional, unless steam_userurl isn't specified)
+        :param userurl: The user's vanity URL-ending name. (Required if "steam_userid" isn't specified,
         unused otherwise)
         :raise: ValueError on improper usage.
         """
-        if steam_userid is None and steam_userurl is None:
+        if userid is None and userurl is None:
             raise ValueError("One of the arguments must be supplied.")
 
-        if steam_userurl is not None:
-            response = APIConnection().call("ISteamUser", "ResolveVanityURL", "v0001", vanityurl=steam_userurl)
-            steam_userid = response.steamid
+        if userurl is not None:
+            response = APIConnection().call("ISteamUser", "ResolveVanityURL", "v0001", vanityurl=userurl)
+            userid = response.steamid
 
-        if steam_userid is not None:
-            self._id = steam_userid
+        if userid is not None:
+            self._id = userid
 
     def __eq__(self, other):
         if type(other) is SteamUser:
@@ -36,9 +46,6 @@ class SteamUser(object):
                 return False
         else:
             return super(SteamUser, self).__eq__(other)
-
-    def __repr__(self):
-        return '<SteamUser "{name}" ({id})>'.format(name=self.name, id=self.steamid)
 
     # PRIVATE UTILITIES
     @cached_property(ttl=2 * HOUR)
@@ -52,6 +59,15 @@ class SteamUser(object):
     @cached_property(ttl=INFINITE)
     def name(self):
         return self._summary.personaname
+
+    @cached_property(ttl=1 * HOUR)
+    def groups(self):
+        response = APIConnection().call("ISteamUser", "GetUserGroupList", "v1", steamid=self.steamid)
+        group_list = []
+        for group in response.groups:
+            group_obj = SteamGroup(group.gid)
+            group_list += [group_obj]
+        return group_list
 
     @cached_property(ttl=30 * MINUTE)
     def friends(self):

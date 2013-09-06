@@ -121,3 +121,10 @@ class APIResponse(object):
     def __iter__(self):
         return self._real_dictionary.__iter__()
 
+
+class SteamObject(object):
+    def __repr__(self):
+        try:
+            return '<{clsname} "{name}" ({id})>'.format(clsname=self.__class__.__name__, name=self.name.encode(errors="ignore"), id=self._id)
+        except AttributeError:
+            return '<{clsname} ({id})>'.format(clsname=self.__class__.__name__, id=self._id)
