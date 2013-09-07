@@ -40,6 +40,8 @@ But wait, there's more!
 ```
 And yes, that would be *your entire games library*.
 
+The library was made for both easy use *and* easy prototyping. It supports auto-completion in IPython and other standards-abiding interpreters, even with dynamic objects (APIResponse). I mean, what good is an API if you constantly have to have the documentation, a browser and a *web debugger* open to figure it out?
+
 Note that you need an API key for most commands, **but** API keys can be obtained immediately, for free, from the [Steam Web API developer page](http://steamcommunity.com/dev).
 
 Don't be alarmed by its request for a domain; at this time of writing, the API also **does not** enforce which domain uses the key, so you can experiment freely.
