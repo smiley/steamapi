@@ -27,6 +27,9 @@ class APIConnection(object):
 
         """
         self.reset(api_key)
+
+        self.precache = True
+
         if 'precache' in settings and type(settings['precache']) is bool:
             self.precache = settings['precache']
 
