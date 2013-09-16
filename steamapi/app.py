@@ -64,7 +64,7 @@ class SteamAchievement(SteamObject):
         return self._id
 
     @cached_property(ttl=INFINITE)
-    def hidden(self):
+    def is_hidden(self):
         response = APIConnection().call("ISteamUserStats",
                                         "GetSchemaForGame",
                                         "v2",
@@ -77,7 +77,7 @@ class SteamAchievement(SteamObject):
                     return True
 
     @cached_property(ttl=INFINITE)
-    def achieved(self):
+    def is_achieved(self):
         if self._userid is None:
             raise ValueError("No Steam ID linked to this achievement!")
         response = APIConnection().call("ISteamUserStats",
