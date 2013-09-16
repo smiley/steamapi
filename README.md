@@ -58,7 +58,7 @@ If you still can't find it, I probably didn't implement it yet. This is still a 
 ### I have a feature/change that I think should go in. How can I participate?
 You can do one of two things:
  1. [Fork the repository](/../../fork) and make your changes. When you're done, send me a pull request and I'll look at it.
- 2. [Open a ticket](/../../issues) and tell me about it. My aim is to create the best API library in terms of comfort, flexibility and capabilities, and I can't do that alone. I'd love to hear about your ideas.
+ 2. [Open a ticket](/../../issues/new) and tell me about it. My aim is to create the best API library in terms of comfort, flexibility and capabilities, and I can't do that alone. I'd love to hear about your ideas.
 
 ### Is this official?
 No, and it's also not endorsed in any way by Valve Corporation. _(obligatory legal notice)_ I couldn't find a fitting name at this point for it, so I just skipped it for now.
