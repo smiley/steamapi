@@ -1,10 +1,46 @@
-from .core import SteamObject
-from .decorators import cached_property, INFINITE, MINUTE, HOUR
-from .app import SteamApp
-
 __author__ = 'SmileyBarry'
 
-from .core import APIConnection
+from .core import APIConnection, SteamObject
+
+from .app import SteamApp
+from .consts import OnlineState, CommunityVisibilityState
+from .decorators import cached_property, INFINITE, MINUTE, HOUR
+
+import datetime
+
+
+class SteamUserBadge(SteamObject):
+    def __init__(self, badge_id, level, completion_time, xp, scarcity, appid=None):
+        self._id = badge_id
+        self._level = level
+        self._completion_time = completion_time
+        self._xp = xp
+        self._scarcity = scarcity
+        self._appid = appid
+
+    @property
+    def badge_id(self):
+        return self._id
+
+    @property
+    def level(self):
+        return self._level
+
+    @property
+    def xp(self):
+        return self._xp
+
+    @property
+    def scarcity(self):
+        return self._scarcity
+
+    @property
+    def appid(self):
+        return self._appid
+
+    @property
+    def completion_time(self):
+        return datetime.datetime.fromtimestamp(self._completion_time)
 
 
 class SteamGroup(SteamObject):
@@ -47,11 +83,23 @@ class SteamUser(SteamObject):
         else:
             return super(SteamUser, self).__eq__(other)
 
+    def __str__(self):
+        return self.name
+
     # PRIVATE UTILITIES
     @cached_property(ttl=2 * HOUR)
     def _summary(self):
         return APIConnection().call("ISteamUser", "GetPlayerSummaries", "v0002", steamids=self.steamid).players[0]
 
+    @cached_property(ttl=INFINITE)
+    def _bans(self):
+        return APIConnection().call("ISteamUser", "GetPlayerBans", "v1", steamids=self.steamid).players[0]
+
+    @cached_property(ttl=30 * MINUTE)
+    def _badges(self):
+        return APIConnection().call("IPlayerService", "GetBadges", "v1", steamid=self.steamid)
+
+    # PUBLIC ATTRIBUTES
     @property
     def steamid(self):
         return self._id
@@ -59,6 +107,56 @@ class SteamUser(SteamObject):
     @cached_property(ttl=INFINITE)
     def name(self):
         return self._summary.personaname
+
+    @cached_property(ttl=INFINITE)
+    def real_name(self):
+        return self._summary.realname
+
+    @cached_property(ttl=INFINITE)
+    def country_code(self):
+        return self._summary.loccountrycode
+
+    @cached_property(ttl=10 * MINUTE)
+    def currently_playing(self):
+        if "gameid" in self._summary:
+            return SteamApp(self._summary.gameid, self._summary.gameextrainfo)
+        else:
+            return None
+
+    @property  # Already cached by "_summary".
+    def privacy(self):
+        # The Web API is a public-facing interface, so it's very unlikely that it will
+        # ever change drastically. (More values could be added, but existing ones wouldn't
+        # be changed.)
+        return self._summary.communityvisibilitystate
+
+    @property  # Already cached by "_summary".
+    def last_logoff(self):
+        return datetime.datetime.fromtimestamp(self._summary.lastlogoff)
+
+    @cached_property(ttl=INFINITE)  # Already cached, but never changes.
+    def time_created(self):
+        return datetime.datetime.fromtimestamp(self._summary.timecreated)
+
+    @cached_property(ttl=INFINITE)  # Already cached, but unlikely to change.
+    def profile_url(self):
+        return self._summary.profileurl
+
+    @property  # Already cached by "_summary".
+    def avatar(self):
+        return self._summary.avatar
+
+    @property  # Already cached by "_summary".
+    def avatar_medium(self):
+        return self._summary.avatarmedium
+
+    @property  # Already cached by "_summary".
+    def avatar_full(self):
+        return self._summary.avatarfull
+
+    @property  # Already cached by "_summary".
+    def state(self):
+        return self._summary.personastate
 
     @cached_property(ttl=1 * HOUR)
     def groups(self):
@@ -69,7 +167,11 @@ class SteamUser(SteamObject):
             group_list += [group_obj]
         return group_list
 
-    @cached_property(ttl=30 * MINUTE)
+    @cached_property(ttl=1 * HOUR)
+    def group(self):
+        return SteamGroup(self._summary.primaryclanid)
+
+    @cached_property(ttl=1 * HOUR)
     def friends(self):
         response = APIConnection().call("ISteamUser", "GetFriendList", "v0001", steamid=self.steamid,
                                         relationship="friend")
@@ -94,7 +196,7 @@ class SteamUser(SteamObject):
                 player_details = APIConnection().call("ISteamUser",
                                                       "GetPlayerSummaries",
                                                       "v0002",
-                                                      steamids=','.join(chunk)).players
+                                                      steamids=chunk).players
 
                 import time
                 now = time.time()
@@ -103,10 +205,25 @@ class SteamUser(SteamObject):
                     id_player_map[player_summary.steamid]._cache["_summary"] = (player_summary, now)
         return friends_list
 
-    @cached_property(ttl=2 * HOUR)
+    @property  # Already cached by "_badges".
     def level(self):
-        response = APIConnection().call("IPlayerService", "GetSteamLevel", "v1", steamid=self.steamid)
-        return response.player_level
+        return self._badges.player_level
+
+    @property  # Already cached by "_badges".
+    def badges(self):
+        badge_list = []
+        for badge in self._badges.badges:
+            badge_list += [SteamUserBadge(badge.badgeid,
+                                          badge.level,
+                                          badge.completion_time,
+                                          badge.xp,
+                                          badge.scarcity,
+                                          badge.appid)]
+        return badge_list
+
+    @property  # Already cached by "_badges".
+    def xp(self):
+        return self._badges.player_xp
 
     @cached_property(ttl=INFINITE)
     def recently_played(self):
@@ -134,3 +251,11 @@ class SteamUser(SteamObject):
             game_obj.playtime_forever = game.playtime_forever
             games_list += [game_obj]
         return games_list
+
+    @cached_property(ttl=INFINITE)
+    def is_vac_banned(self):
+        return self._bans.VACBanned
+
+    @cached_property(ttl=INFINITE)
+    def is_community_banned(self):
+        return self._bans.CommunityBanned
