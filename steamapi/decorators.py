@@ -1,5 +1,6 @@
 __author__ = 'SmileyBarry'
 
+import threading
 import time
 
 
@@ -15,8 +16,10 @@ class debug(object):
 MINUTE = 60
 HOUR = 60 * MINUTE
 INFINITE = 0
+
+
 class cached_property(object):
-    '''(C) 2011 Christopher Arndt, MIT License
+    """(C) 2011 Christopher Arndt, MIT License
 
     Decorator for read-only properties evaluated only once within TTL period.
 
@@ -47,7 +50,7 @@ class cached_property(object):
 
         del instance._cache[<property name>]
 
-    '''
+    """
     def __init__(self, ttl=300):
         self.ttl = ttl
 
@@ -93,6 +96,7 @@ class Singleton:
     """
 
     def __init__(self, decorated):
+        self._lock = threading.Lock()
         self._decorated = decorated
 
     def __call__(self, *args, **kwargs):
@@ -102,11 +106,12 @@ class Singleton:
         On all subsequent calls, the already created instance is returned.
 
         """
-        try:
-            return self._instance
-        except AttributeError:
-            self._instance = self._decorated(*args, **kwargs)
-            return self._instance
+        with self._lock:
+            try:
+                return self._instance
+            except AttributeError:
+                self._instance = self._decorated(*args, **kwargs)
+                return self._instance
 
     def __instancecheck__(self, inst):
         return isinstance(inst, self._decorated)
