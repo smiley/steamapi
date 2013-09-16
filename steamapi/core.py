@@ -52,6 +52,12 @@ class APIConnection(object):
 
         :rtype : APIResponse or str
         """
+        for argument in kwargs:
+            if type(kwargs[argument]) is list:
+                # The API takes multiple values in a "a,b,c" structure, so we
+                # have to encode it in that way.
+                kwargs[argument] = ','.join(kwargs[argument])
+
         automatic_parsing = True
         if "format" in kwargs:
             automatic_parsing = False
@@ -63,13 +69,10 @@ class APIConnection(object):
 
         query = self.QUERY_TEMPLATE.format(interface=interface, command=command, version=version)
 
-        import time
-        before = time.time()
         if method == POST:
             response = requests.request(method, query, data=kwargs)
         else:
             response = requests.request(method, query, params=kwargs)
-        after = time.time()
 
         if response.status_code != 200:
             errors.raiseAppropriateException(response.status_code)
@@ -113,7 +116,7 @@ class APIResponse(object):
         if item.startswith("_"):
             return super(APIResponse, self).__getattribute__(item)
         else:
-            if self._real_dictionary.has_key(item):
+            if item in self._real_dictionary:
                 return self._real_dictionary[item]
             else:
                 return None
@@ -128,6 +131,8 @@ class APIResponse(object):
 class SteamObject(object):
     def __repr__(self):
         try:
-            return '<{clsname} "{name}" ({id})>'.format(clsname=self.__class__.__name__, name=self.name.encode(errors="ignore"), id=self._id)
+            return '<{clsname} "{name}" ({id})>'.format(clsname=self.__class__.__name__,
+                                                        name=self.name.encode(errors="ignore"),
+                                                        id=self._id)
         except AttributeError:
             return '<{clsname} ({id})>'.format(clsname=self.__class__.__name__, id=self._id)
