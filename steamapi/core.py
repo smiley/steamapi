@@ -129,6 +129,10 @@ class APIResponse(object):
 
 
 class SteamObject(object):
+    @property
+    def id(self):
+        return self._id
+
     def __repr__(self):
         try:
             return '<{clsname} "{name}" ({id})>'.format(clsname=self.__class__.__name__,
