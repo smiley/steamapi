@@ -1,0 +1,10 @@
+language: python
+python:
+  - "3.3"
+  - "2.7"
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install: pip install -r requirements.txt --use-mirrors
+# command to run tests, e.g. python setup.py test
+## This is the ugliest form of testing but since this library doesn't have proper
+## tests yet, this is the best way to test that it works on a basic level.
+script:  python -c "from steamapi import *"
