@@ -57,6 +57,12 @@ class APIConnection(object):
                 # The API takes multiple values in a "a,b,c" structure, so we
                 # have to encode it in that way.
                 kwargs[argument] = ','.join(kwargs[argument])
+            elif type(kwargs[argument]) is bool:
+                # The API treats True/False as 1/0. Convert it.
+                if kwargs[argument] is True:
+                    kwargs[argument] = 1
+                else:
+                    kwargs[argument] = 0
 
         automatic_parsing = True
         if "format" in kwargs:

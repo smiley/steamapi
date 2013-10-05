@@ -118,6 +118,23 @@ class SteamUser(SteamObject):
         return self.name
 
     # PRIVATE UTILITIES
+    @staticmethod
+    def _convert_games_list(raw_list):
+        """
+        Convert a raw, APIResponse-formatted list of games into full SteamApp objects.
+        :type raw_list: list of APIResponse
+        :rtype: list of SteamApp
+        """
+        games_list = []
+        for game in raw_list:
+            game_obj = SteamApp(game.appid, game.name)
+            if 'playtime_2weeks' in game:
+                game_obj.playtime_2weeks = game.playtime_2weeks
+            if 'playtime_forever' in game:
+                game_obj.playtime_forever = game.playtime_forever
+            games_list += [game_obj]
+        return games_list
+
     @cached_property(ttl=2 * HOUR)
     def _summary(self):
         """
@@ -328,13 +345,7 @@ class SteamUser(SteamObject):
         :rtype: list of SteamApp
         """
         response = APIConnection().call("IPlayerService", "GetRecentlyPlayedGames", "v1", steamid=self.steamid)
-        games_list = []
-        for game in response.games:
-            game_obj = SteamApp(game.appid, game.name)
-            game_obj.playtime_2weeks = game.playtime_2weeks
-            game_obj.playtime_forever = game.playtime_forever
-            games_list += [game_obj]
-        return games_list
+        return self._convert_games_list(response.games)
 
     @cached_property(ttl=INFINITE)
     def games(self):
@@ -345,15 +356,22 @@ class SteamUser(SteamObject):
                                         "GetOwnedGames",
                                         "v1",
                                         steamid=self.steamid,
-                                        include_appinfo=1)
-        games_list = []
-        for game in response.games:
-            game_obj = SteamApp(game.appid, game.name)
-            if 'playtime_2weeks' in game:
-                game_obj.playtime_2weeks = game.playtime_2weeks
-            game_obj.playtime_forever = game.playtime_forever
-            games_list += [game_obj]
-        return games_list
+                                        include_appinfo=True,
+                                        include_played_free_games=True)
+        return self._convert_games_list(response.games)
+
+    @cached_property(ttl=INFINITE)
+    def owned_games(self):
+        """
+        :rtype: list of SteamApp
+        """
+        response = APIConnection().call("IPlayerService",
+                                        "GetOwnedGames",
+                                        "v1",
+                                        steamid=self.steamid,
+                                        include_appinfo=True,
+                                        include_played_free_games=False)
+        return self._convert_games_list(response.games)
 
     @cached_property(ttl=INFINITE)
     def is_vac_banned(self):
