@@ -1,6 +1,5 @@
-SteamAPI
+SteamAPI [![Build Status](https://travis-ci.org/smiley/steamapi.png?branch=master)](https://travis-ci.org/smiley/steamapi)
 ========
-
 An object-oriented Python 2.7+ library for accessing the Steam Web API.
 
 ## What's this?
