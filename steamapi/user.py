@@ -7,6 +7,7 @@ from .decorators import cached_property, INFINITE, MINUTE, HOUR
 
 import datetime
 
+
 class SteamUserBadge(SteamObject):
     def __init__(self, badge_id, level, completion_time, xp, scarcity, appid=None):
         """
@@ -119,7 +120,7 @@ class SteamUser(SteamObject):
 
     # PRIVATE UTILITIES
     @staticmethod
-    def _convert_games_list(raw_list):
+    def _convert_games_list(raw_list, associated_userid=None):
         """
         Convert a raw, APIResponse-formatted list of games into full SteamApp objects.
         :type raw_list: list of APIResponse
@@ -127,7 +128,7 @@ class SteamUser(SteamObject):
         """
         games_list = []
         for game in raw_list:
-            game_obj = SteamApp(game.appid, game.name)
+            game_obj = SteamApp(game.appid, game.name, associated_userid)
             if 'playtime_2weeks' in game:
                 game_obj.playtime_2weeks = game.playtime_2weeks
             if 'playtime_forever' in game:
@@ -191,7 +192,13 @@ class SteamUser(SteamObject):
         :rtype: SteamApp
         """
         if "gameid" in self._summary:
-            return SteamApp(self._summary.gameid, self._summary.gameextrainfo)
+            game = SteamApp(self._summary.gameid, self._summary.gameextrainfo)
+            owner = APIConnection().call("IPlayerService", "IsPlayingSharedGame", "v0001",
+                                         steamid=self._id,
+                                         appid_playing=game.appid)
+            if owner.lender_steamid is not 0:
+                game._owner = owner.lender_steamid
+            return game
         else:
             return None
 
@@ -345,7 +352,7 @@ class SteamUser(SteamObject):
         :rtype: list of SteamApp
         """
         response = APIConnection().call("IPlayerService", "GetRecentlyPlayedGames", "v1", steamid=self.steamid)
-        return self._convert_games_list(response.games)
+        return self._convert_games_list(response.games, self._id)
 
     @cached_property(ttl=INFINITE)
     def games(self):
@@ -358,7 +365,7 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=True)
-        return self._convert_games_list(response.games)
+        return self._convert_games_list(response.games, self._id)
 
     @cached_property(ttl=INFINITE)
     def owned_games(self):
@@ -371,7 +378,7 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=False)
-        return self._convert_games_list(response.games)
+        return self._convert_games_list(response.games, self._id)
 
     @cached_property(ttl=INFINITE)
     def is_vac_banned(self):
