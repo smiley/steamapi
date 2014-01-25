@@ -10,6 +10,20 @@ class APIException(Exception):
     pass
 
 
+class APIUserError(APIException):
+    """
+    An API error caused by a user error, like wrong data or just empty results for a query.
+    """
+    pass
+
+
+class UserNotFoundError(APIUserError):
+    """
+    The specified user was not found on the Steam Community. (Bad vanity URL? Non-existent ID?)
+    """
+    pass
+
+
 class APIError(APIException):
     """
     An API error signifies a problem with the server, a temporary issue or some other easily-repairable
@@ -48,6 +62,7 @@ class APIUnauthorized(APIFailure):
     properly authorised said user. (401)
     """
     pass
+
 
 class APIConfigurationError(APIFailure):
     """

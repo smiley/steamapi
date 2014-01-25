@@ -4,6 +4,7 @@ from .core import APIConnection, SteamObject
 
 from .app import SteamApp
 from .decorators import cached_property, INFINITE, MINUTE, HOUR
+from .errors import *
 
 import datetime
 
@@ -100,7 +101,12 @@ class SteamUser(SteamObject):
             raise ValueError("One of the arguments must be supplied.")
 
         if userurl is not None:
+            if '/' in userurl:
+                # This is a full URL. It's not valid.
+                raise ValueError("\"userurl\" must be the *ending* of a vanity URL, not the entire URL!")
             response = APIConnection().call("ISteamUser", "ResolveVanityURL", "v0001", vanityurl=userurl)
+            if response.success != 1:
+                raise UserNotFoundError("User not found.")
             userid = response.steamid
 
         if userid is not None:

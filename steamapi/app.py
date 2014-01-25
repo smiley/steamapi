@@ -44,7 +44,6 @@ class SteamApp(SteamObject):
                            for associated_achievement in unlocks.playerstats.achievements
                            if associated_achievement.achieved != 0]
         else:
-
             userid = None
             unlocks = None
         achievements_list = []
