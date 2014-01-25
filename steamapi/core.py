@@ -12,7 +12,6 @@ POST = "POST"
 
 class APICall(object):
     _QUERY_DOMAIN = "http://api.steampowered.com"
-    # Use double curly-braces to tell Python that these variables shouldn't be expanded yet.
     _QUERY_TEMPLATE = "{domain}/".format(domain=_QUERY_DOMAIN)
 
     def __init__(self, api_id, parent=None):

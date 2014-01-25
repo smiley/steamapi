@@ -10,7 +10,7 @@ It's super-easy to use, straightforward and designed for continuous use. Finally
 ## How?
 With some abstraction, Pythonic classes and ~~magic~~ tricks. Essentially, I use [*requests*](/kennethreitz/requests) for the actual communication, a few converter classes for parsing the output and making it a proper object, and some well-timed caching to make sure lazy-initialization doesn't get you down.
 
-## Wait, how do I use this fabulous product?
+## How do I use this?
 Like so!
 ```python
 >>> import steamapi
@@ -29,15 +29,69 @@ Or maybe even like this!
 ...
 >>> me.recently_played
 [<SteamApp "Dishonored" (205100)>, <SteamApp "Saints Row: The Third" (55230)>, ...]
-```
-
-But wait, there's more!
-```python
-...
 >>> me.games
 [<SteamApp "Counter-Strike: Source" (240)>, <SteamApp "Team Fortress Classic" (20)>, <SteamApp "Half-Life: Opposing Force" (50)>, ...]
 ```
 And yes, that would be *your entire games library*.
+
+## More examples
+### [Flask](http://flask.pocoo.org/)-based web service
+How about a Flask web service that tells a user how many games & friends he has?
+```python
+from flask import Flask
+from flask import render_template
+from steamapi import * # All submodules.
+
+app = Flask(__name__.split('.')[0])
+
+@app.route('/user/<name>')
+def hello(name=None):
+  try:
+    core.APIConnection(api_key="YOURKEYHERE")
+    try:
+      steam_user = user.SteamUser(userid=int(name))
+    except ValueError: # Not an ID, but a vanity URL.
+      steam_user = user.SteamUser(userurl=name)
+    name = steam_user.name
+    content = "Your real name is {0}. You have {1} friends and {2} games.".format(steam_user.real_name,
+                                                                                  len(steam_user.friends),
+                                                                                  len(steam_user.games))
+    img = steam_user.avatar
+  except Exception as ex:
+    import pdb
+    pdb.set_trace()
+    # We might not have permission to the user's friends list or games, so just carry on with a blank message.
+    content = None
+    img = None
+  return render_template('hello.html', name=name, content=content, img=img)
+  
+if __name__ == '__main__':
+  app.run()
+```
+
+(And "hello.html": )
+```html
+<!doctype html>
+<html>
+  <body>
+    <title>Hello there!</title>
+    {% if name %}
+      <h1>Hello {% if img %}<img src="{{ img }}" /> {% endif %}{{ name }}!</h1>
+    {% else %}
+      <h1>Hello Anonymous!</h1>
+    {% endif %}
+    {% if content %}
+      <p>{{ content }}</p>
+    {% endif %}
+  </body>
+</html>
+```
+
+Wanna try it out for yourself? I deployed it to a [Google App Engine instance](http://smileybarry-example.appspot.com/user/smileybarry). Exactly the same code. (Except I used my key instead of "YOURKEYHERE")
+
+(This is based off of [*Google App Engine's* Python + Flask example](https://developers.google.com/appengine/))
+
+---
 
 The library was made for both easy use *and* easy prototyping. It supports auto-completion in IPython and other standards-abiding interpreters, even with dynamic objects (APIResponse). I mean, what good is an API if you constantly have to have the documentation, a browser and a *web debugger* open to figure it out?
 
