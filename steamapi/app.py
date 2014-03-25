@@ -83,6 +83,9 @@ class SteamApp(SteamObject):
     def __hash__(self):
         return hash(self._id)
 
+    def __eq__(self, other):
+        return self._id == other._id
+
 
 class SteamAchievement(SteamObject):
     def __init__(self, linked_appid, apiname, displayname, linked_userid=None):
@@ -142,3 +145,6 @@ class SteamAchievement(SteamObject):
 
     def __hash__(self):
         return hash((self._id,self._appid))
+
+    def __eq__(self, other):
+        return self._id == other._id
