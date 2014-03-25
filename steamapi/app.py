@@ -80,6 +80,9 @@ class SteamApp(SteamObject):
     def __str__(self):
         return self.name
 
+    def __hash__(self):
+        return hash(self._id)
+
 
 class SteamAchievement(SteamObject):
     def __init__(self, linked_appid, apiname, displayname, linked_userid=None):
@@ -136,3 +139,6 @@ class SteamAchievement(SteamObject):
                     return False
         # Cannot be found.
         return False
+
+    def __hash__(self):
+        return hash((self._id,self._appid))
