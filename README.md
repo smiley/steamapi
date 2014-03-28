@@ -58,8 +58,6 @@ def hello(name=None):
                                                                                   len(steam_user.games))
     img = steam_user.avatar
   except Exception as ex:
-    import pdb
-    pdb.set_trace()
     # We might not have permission to the user's friends list or games, so just carry on with a blank message.
     content = None
     img = None
