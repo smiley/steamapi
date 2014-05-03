@@ -85,7 +85,7 @@ if __name__ == '__main__':
 </html>
 ```
 
-Wanna try it out for yourself? I deployed it to a [Google App Engine instance](http://smileybarry-example.appspot.com/user/smileybarry). Exactly the same code. (Except I used my key instead of "YOURKEYHERE")
+Wanna try it out for yourself? I deployed it to a ~~[Google App Engine instance](http://smileybarry-example.appspot.com/user/smileybarry)~~. **(Looks like Steam's Web API is laggy enough that Google App Engine timeouts my requests. I recommend [cloning it locally](https://github.com/smiley/steamapi-flask-example) and running main.py)**. Exactly the same code. (Except I used my key instead of "YOURKEYHERE")
 
 (This is based off of [*Google App Engine's* Python + Flask example](https://developers.google.com/appengine/))
 
