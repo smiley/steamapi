@@ -4,7 +4,7 @@ import logging
 import requests
 import time
 
-from .consts import IPYTHON_PEEVES
+from .consts import IPYTHON_PEEVES, IPYTHON_MODE
 from .decorators import Singleton, cached_property, INFINITE
 from . import errors
 
@@ -42,6 +42,9 @@ class APICall(object):
         self._parent = parent
         self._method = method
 
+        # Set an empty documentation for now.
+        self._api_documentation = ""
+
     def __str__(self):
         """
         Generate the function URL.
@@ -71,19 +74,32 @@ class APICall(object):
         if item.startswith('_'):
             # Underscore items are special.
             return super(APICall, self).__getattribute__(item)
-        elif item in IPYTHON_PEEVES:
-            # IPython always looks for this, no matter what (hiding it in __dir__ doesn't work), so this is
-            # necessary to keep it from constantly making new APICall instances. (a significant slowdown)
-            raise AttributeError()
         else:
             try:
                 return super(APICall, self).__getattribute__(item)
             except AttributeError:
+                if IPYTHON_MODE is True:
+                    # We're in IPython. Which means "getdoc()" is also automatically used for docstrings!
+                    if item == "getdoc":
+                        return lambda: self._api_documentation
+                    elif item in IPYTHON_PEEVES:
+                        # IPython always looks for this, no matter what (hiding it in __dir__ doesn't work), so this is
+                        # necessary to keep it from constantly making new APICall instances. (a significant slowdown)
+                        raise
                 # Not an expected item, so generate a new APICall!
                 return APICall(item, self)
 
     def __iter__(self):
         return self.__dict__.__iter__()
+
+    def _set_documentation(self, docstring):
+        """
+        Set a docstring specific to this instance of APICall, explaining the bound function.
+
+        :param docstring: The relevant docstring.
+        :return: None
+        """
+        self._api_documentation = docstring
 
     def _register(self, apicall_child=None):
         """
@@ -244,7 +260,8 @@ Parameters:
                 func_docstring = docstring.format(name=method.name,
                                                   parameter_list='\n'.join(parameters))
                 # Set the docstring appropriately
-                method_object.__call__.__func__.__doc__ = func_docstring
+                method_object._api_documentation = func_docstring
+                #method_object.__call__.__func__.__doc__ = func_docstring
 
                 # Now call the standard registration method.
                 method_object._register()
