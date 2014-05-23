@@ -221,9 +221,6 @@ class APIInterface(object):
         api_definition = self.ISteamWebAPIUtil.GetSupportedAPIList.v0001(key=self._api_key)
 
         for interface in api_definition.apilist.interfaces:
-            if interface.name == "ISteamApps":
-                import pdb
-                #pdb.set_trace()
             interface_object = APICall(interface.name)
             parameter_description = "{indent}{{requirement}} {{type}} {{name}}:{indent}{{desc}}".format(indent='\t')
             # Unindented so that the docstring won't be overly indented.
@@ -420,8 +417,6 @@ class APIResponse(object):
             if item in self._real_dictionary:
                 return self._real_dictionary[item]
             else:
-                import pdb
-                pdb.set_trace()
                 raise AttributeError("'{cls}' has no attribute '{attr}'".format(cls=type(self).__name__,
                                                                                 attr=item))
 
