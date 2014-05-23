@@ -58,8 +58,6 @@ def hello(name=None):
                                                                                   len(steam_user.games))
     img = steam_user.avatar
   except Exception as ex:
-    import pdb
-    pdb.set_trace()
     # We might not have permission to the user's friends list or games, so just carry on with a blank message.
     content = None
     img = None
@@ -87,7 +85,7 @@ if __name__ == '__main__':
 </html>
 ```
 
-Wanna try it out for yourself? I deployed it to a [Google App Engine instance](http://smileybarry-example.appspot.com/user/smileybarry). Exactly the same code. (Except I used my key instead of "YOURKEYHERE")
+Wanna try it out for yourself? I deployed it to a ~~[Google App Engine instance](http://smileybarry-example.appspot.com/user/smileybarry)~~. **(Looks like Steam's Web API is laggy enough that Google App Engine timeouts my requests. I recommend [cloning it locally](https://github.com/smiley/steamapi-flask-example) and running main.py)**. Exactly the same code. (Except I used my key instead of "YOURKEYHERE")
 
 (This is based off of [*Google App Engine's* Python + Flask example](https://developers.google.com/appengine/))
 
