@@ -73,10 +73,18 @@ class SteamUserBadge(SteamObject):
                                                    id=self._id,
                                                    xp=self._xp)
 
+    def __hash__(self):
+        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        return hash((self._appid, self.id))
+
 
 class SteamGroup(SteamObject):
     def __init__(self, guid):
         self._id = guid
+
+    def __hash__(self):
+        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        return hash(('group', self.id))
 
     @property
     def guid(self):
@@ -123,6 +131,10 @@ class SteamUser(SteamObject):
 
     def __str__(self):
         return self.name
+
+    def __hash__(self):
+        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        return hash(('user', self.id))
 
     # PRIVATE UTILITIES
     @staticmethod
@@ -358,6 +370,8 @@ class SteamUser(SteamObject):
         :rtype: list of SteamApp
         """
         response = APIConnection().call("IPlayerService", "GetRecentlyPlayedGames", "v1", steamid=self.steamid)
+        if response.total_count == 0:
+            return []
         return self._convert_games_list(response.games, self._id)
 
     @cached_property(ttl=INFINITE)
@@ -371,6 +385,8 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=True)
+        if response.games_count == 0:
+            return []
         return self._convert_games_list(response.games, self._id)
 
     @cached_property(ttl=INFINITE)
@@ -384,6 +400,8 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=False)
+        if response.games_count == 0:
+            return []
         return self._convert_games_list(response.games, self._id)
 
     @cached_property(ttl=INFINITE)
