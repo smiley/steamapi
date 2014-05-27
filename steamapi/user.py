@@ -358,6 +358,8 @@ class SteamUser(SteamObject):
         :rtype: list of SteamApp
         """
         response = APIConnection().call("IPlayerService", "GetRecentlyPlayedGames", "v1", steamid=self.steamid)
+        if response.total_count == 0:
+            return []
         return self._convert_games_list(response.games, self._id)
 
     @cached_property(ttl=INFINITE)
@@ -371,6 +373,8 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=True)
+        if response.games_count == 0:
+            return []
         return self._convert_games_list(response.games, self._id)
 
     @cached_property(ttl=INFINITE)
@@ -384,6 +388,8 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=False)
+        if response.games_count == 0:
+            return []
         return self._convert_games_list(response.games, self._id)
 
     @cached_property(ttl=INFINITE)
