@@ -261,8 +261,25 @@ class SteamObject(object):
         except AttributeError:
             return '<{clsname} ({id})>'.format(clsname=self.__class__.__name__, id=self._id)
 
+    def __eq__(self, other):
+        """
+        :type other: SteamObject
+        """
+        # Use a "hash" of each object to prevent cases where derivative classes sharing the
+        # same ID, like a user and an app, would cause a match if compared using ".id".
+        return hash(self) == hash(other)
 
-def store(obj, property_name, data, received_time=time.time()):
+    def __ne__(self, other):
+        """
+        :type other: SteamObject
+        """
+        return not self == other
+
+    def __hash__(self):
+        return hash(self.id)
+
+
+def store(obj, property_name, data, received_time=0):
     """
     Store data inside the cache of a cache-enabled object. Mainly used for pre-caching.
 
@@ -272,8 +289,11 @@ def store(obj, property_name, data, received_time=time.time()):
     :param data: The data that we need to store inside the object's cache.
     :type data: object
     :param received_time: The time this data was retrieved. Used for the property cache.
+    Set to 0 to use the current time.
     :type received_time: float
     """
+    if received_time == 0:
+        received_time = time.time()
     # Just making sure caching is supported for this object...
     if issubclass(type(obj), SteamObject) or hasattr(obj, "_cache"):
         obj._cache[property_name] = (data, received_time)

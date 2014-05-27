@@ -73,10 +73,18 @@ class SteamUserBadge(SteamObject):
                                                    id=self._id,
                                                    xp=self._xp)
 
+    def __hash__(self):
+        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        return hash((self._appid, self.id))
+
 
 class SteamGroup(SteamObject):
     def __init__(self, guid):
         self._id = guid
+
+    def __hash__(self):
+        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        return hash(('group', self.id))
 
     @property
     def guid(self):
@@ -123,6 +131,10 @@ class SteamUser(SteamObject):
 
     def __str__(self):
         return self.name
+
+    def __hash__(self):
+        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        return hash(('user', self.id))
 
     # PRIVATE UTILITIES
     @staticmethod
