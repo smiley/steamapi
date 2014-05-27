@@ -116,3 +116,8 @@ No, and it's also not endorsed in any way by Valve Corporation. _(obligatory leg
 
 ### Can I use this library in my busy web app?
 No, not yet. :( I try to make sure I don't break anything when I make changes, but every now and then I might refactor it a bit. Right now, it's in a __shaky beta__ phase. (Why "shaky"? Because it's stable in terms of actual code, so "unstable" would be wrong.)
+
+### Is this still actively-developed? The last commit is quite a while ago!
+Yes, but less than before. This is a side-project, and sadly work has become hectic enough that I have less time and energy to work on this & other side-projects.
+
+That doesn't mean I'm not working on it at all, but it does mean development's gotten slower.
