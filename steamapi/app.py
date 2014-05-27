@@ -80,14 +80,36 @@ class SteamApp(SteamObject):
     def __str__(self):
         return self.name
 
+    def __hash__(self):
+        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        return hash(('app', self.id))
+
 
 class SteamAchievement(SteamObject):
     def __init__(self, linked_appid, apiname, displayname, linked_userid=None):
+        """
+        Initialise a new instance of SteamAchievement. You shouldn't create one yourself, but from
+        "SteamApp.achievements" instead.
+
+        :param linked_appid: The AppID associated with this achievement.
+        :type linked_appid: int
+        :param apiname: The API-based name of this achievement. Usually a string.
+        :type apiname: str or unicode
+        :param displayname: The achievement's user-facing name.
+        :type displayname: str or unicode
+        :param linked_userid: The user ID this achievement is linked to.
+        :type linked_userid: int
+        :return: A new SteamAchievement instance.
+        """
         self._appid = linked_appid
         self._id = apiname
         self._displayname = displayname
         self._userid = linked_userid
         self.unlock_percentage = 0.0
+
+    def __hash__(self):
+        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        return hash((self.id, self._appid))
 
     @property
     def appid(self):
@@ -99,10 +121,6 @@ class SteamAchievement(SteamObject):
 
     @property
     def apiname(self):
-        return self._id
-
-    @property
-    def id(self):
         return self._id
 
     @cached_property(ttl=INFINITE)
