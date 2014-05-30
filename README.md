@@ -18,7 +18,7 @@ Like so!
 >>> steamapi.user.SteamUser(userurl="smileybarry") # For http://steamcommunity.com/id/smileybarry
 Or:
 >>> steamapi.user.SteamUser(76561197996416028) # Using the 64-bit Steam user ID
-<SteamUser "Johnny" (76561197996416028)>
+<SteamUser "Smiley" (76561197996416028)>
 >>> me = _
 >>> me.level
 22
