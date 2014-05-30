@@ -15,11 +15,13 @@ Like so!
 ```python
 >>> import steamapi
 >>> steamapi.core.APIConnection(api_key="ABCDEFGHIJKLMNOPQRSTUVWXYZ")
->>> steamapi.user.SteamUser(12345678901234567890)
-<SteamUser "Johnny" (12345678901234567890)>
+>>> steamapi.user.SteamUser(userurl="smileybarry") # For http://steamcommunity.com/id/smileybarry
+Or:
+>>> steamapi.user.SteamUser(76561197996416028) # Using the 64-bit Steam user ID
+<SteamUser "Johnny" (76561197996416028)>
 >>> me = _
 >>> me.level
-15
+22
 >>> me.friends
 [<SteamUser "Ryan" (9876543210987654321)>, <SteamUser "Tyler" (1234876598762345)>, ...]
 ```
