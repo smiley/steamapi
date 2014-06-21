@@ -385,7 +385,7 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=True)
-        if response.games_count == 0:
+        if response.game_count == 0:
             return []
         return self._convert_games_list(response.games, self._id)
 
@@ -400,7 +400,7 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=False)
-        if response.games_count == 0:
+        if response.game_count == 0:
             return []
         return self._convert_games_list(response.games, self._id)
 
