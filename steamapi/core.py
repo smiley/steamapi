@@ -399,9 +399,30 @@ class APIResponse(object):
             if type(father_dict[item]) is dict:
                 self._real_dictionary[item] = APIResponse(father_dict[item])
             elif type(father_dict[item]) is list:
-                self._real_dictionary[item] = [APIResponse(entry) for entry in father_dict[item]]
+                self._real_dictionary[item] = APIResponse._wrap_list(father_dict[item])
             else:
                 self._real_dictionary[item] = father_dict[item]
+
+    @staticmethod
+    def _wrap_list(original_list):
+        """
+        Receives a list of items and recursively wraps any dictionaries inside it as APIResponse
+        objects. Resolves issue #12.
+
+        :param original_list: The original list that needs wrapping.
+        :type original_list: list
+        :return: A near-identical list, with "dict" objects replaced into APIResponse ones.
+        :rtype: list
+        """
+        new_list = []
+        for item in original_list:
+            if type(item) is dict:
+                new_list += [APIResponse(item)]
+            elif type(item) is list:
+                new_list += [APIResponse._wrap_list(item)]
+            else:
+                new_list += [item]
+        return new_list
 
     def __repr__(self):
         return dict.__repr__(self._real_dictionary)
