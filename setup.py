@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from pip.req import parse_requirements
 
 def local_requirements():
     req_list = [line.strip() for line in open('requirements.txt').readlines()]
