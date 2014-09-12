@@ -4,8 +4,9 @@ from setuptools import setup
 from pip.req import parse_requirements
 
 def local_requirements():
-    install_reqs = parse_requirements('./requirements.txt')
-    return [str(ir.req) for ir in install_reqs]
+    req_list = [line.strip() for line in open('requirements.txt').readlines()]
+    install_reqs = list(filter(None, req_list))
+    return install_reqs
 
 setup(name='steamapi',
       version='0.1',
