@@ -303,6 +303,8 @@ class SteamUser(SteamObject):
         """
         :rtype: list of SteamUser
         """
+        import time
+        
         response = APIConnection().call("ISteamUser", "GetFriendList", "v0001", steamid=self.steamid,
                                         relationship="friend")
         friends_list = []
@@ -315,24 +317,19 @@ class SteamUser(SteamObject):
         # Fetching some details, like name, could take some time.
         # So, do a few combined queries for all users.
         if APIConnection().precache is True:
-            id_player_map = {friend.steamid: friend for friend in friends_list}
-            ids = id_player_map.keys()
-            CHUNK_SIZE = 35
+            # APIConnection() accepts lists of strings as argument values.
+            id_player_map = {str(friend.steamid): friend for friend in friends_list}
+            ids = list(id_player_map.keys())
 
-            chunks = [ids[start:start+CHUNK_SIZE] for start in range(len(ids))[::CHUNK_SIZE]]
-            # We have to encode "steamids" into one, comma-delimited list because requests
-            # just transforms it into a thousand parameters.
-            for chunk in chunks:
-                player_details = APIConnection().call("ISteamUser",
-                                                      "GetPlayerSummaries",
-                                                      "v0002",
-                                                      steamids=chunk).players
+            player_details = APIConnection().call("ISteamUser",
+                                                  "GetPlayerSummaries",
+                                                  "v0002",
+                                                  steamids=ids).players
 
-                import time
-                now = time.time()
-                for player_summary in player_details:
-                    # Fill in the cache with this info.
-                    id_player_map[player_summary.steamid]._cache["_summary"] = (player_summary, now)
+            now = time.time()
+            for player_summary in player_details:
+                # Fill in the cache with this info.
+                id_player_map[player_summary.steamid]._cache["_summary"] = (player_summary, now)
         return friends_list
 
     @property  # Already cached by "_badges".
