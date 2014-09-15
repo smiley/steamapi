@@ -4,6 +4,7 @@ import requests
 import time
 
 from .decorators import Singleton, cached_property, INFINITE
+from .errors import APIException
 from . import errors
 
 GET = "GET"
@@ -279,7 +280,7 @@ class SteamObject(object):
             return '<{clsname} "{name}" ({id})>'.format(clsname=self.__class__.__name__,
                                                         name=self.name.encode(errors="ignore"),
                                                         id=self._id)
-        except AttributeError:
+        except (AttributeError, APIException):
             return '<{clsname} ({id})>'.format(clsname=self.__class__.__name__, id=self._id)
 
     def __eq__(self, other):
