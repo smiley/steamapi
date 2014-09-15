@@ -73,7 +73,7 @@ class APIConfigurationError(APIFailure):
 
 @debug.no_return
 def raiseAppropriateException(status_code):
-    if status_code / 100 == 4:
+    if status_code // 100 == 4:
         if status_code == 404:
             raise APINotFound()
         elif status_code == 401:
@@ -82,6 +82,6 @@ def raiseAppropriateException(status_code):
             raise APIBadCall()
         else:
             raise APIFailure()
-    elif status_code / 100 == 5:
+    elif status_code // 100 == 5:
         raise APIError()
 
