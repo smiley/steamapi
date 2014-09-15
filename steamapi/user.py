@@ -118,7 +118,7 @@ class SteamUser(SteamObject):
             userid = response.steamid
 
         if userid is not None:
-            self._id = userid
+            self._id = int(userid)
 
     def __eq__(self, other):
         if type(other) is SteamUser:
