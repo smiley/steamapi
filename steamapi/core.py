@@ -1,6 +1,7 @@
 __author__ = 'SmileyBarry'
 
 import requests
+import sys
 import time
 
 from .decorators import Singleton, cached_property, INFINITE
@@ -278,7 +279,7 @@ class SteamObject(object):
     def __repr__(self):
         try:
             return '<{clsname} "{name}" ({id})>'.format(clsname=self.__class__.__name__,
-                                                        name=self.name.encode(errors="ignore"),
+                                                        name=_shims.sanitize_for_console(self.name),
                                                         id=self._id)
         except (AttributeError, APIException):
             return '<{clsname} ({id})>'.format(clsname=self.__class__.__name__, id=self._id)
@@ -336,3 +337,30 @@ def expire(obj, property_name):
         del obj._cache[property_name]
     else:
         raise TypeError("This object type either doesn't visibly support caching, or has yet to initialise its cache.")
+        
+class _shims:
+    """
+    A collection of functions used at junction points where a Python 3.x solution potentially degrades functionality
+    or performance on Python 2.x.
+    """
+    class Python2:
+        @staticmethod
+        def sanitize_for_console(string):
+            """
+            Sanitize a string for console presentation. On Python 2, it decodes Unicode string back to ASCII, dropping
+            non-ASCII characters.
+            """
+            return string.encode(errors="ignore")
+   
+    class Python3:
+        @staticmethod
+        def sanitize_for_console(string):
+            """
+            Sanitize a string for console presentation. Does nothing on Python 3.
+            """
+            return string
+            
+    if sys.version_info.major >= 3:
+        sanitize_for_console = Python3.sanitize_for_console
+    else:
+        sanitize_for_console = Python2.sanitize_for_console
