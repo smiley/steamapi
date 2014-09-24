@@ -1,6 +1,5 @@
 __author__ = 'SmileyBarry'
 
-import logging
 import requests
 import sys
 import time
@@ -24,6 +23,7 @@ if sys.version_info.major < 3:
     # Starting with Python 3, "str" means unicode and "unicode" is not defined. It is
     # still relevant for Python 2.x, however.
     APITypes['string'] += [unicode]
+
 
 class APICall(object):
     _QUERY_DOMAIN = "http://api.steampowered.com"
@@ -270,7 +270,6 @@ Parameters:
             # And now, add it to the APIInterface.
             self.__setattr__(interface.name, interface_object)
 
-
     def __getattr__(self, name):
         """
         Creates a new APICall() instance if "strict" is disabled.
@@ -311,6 +310,8 @@ class APIConnection(object):
 
     def __init__(self, api_key=None, settings={}):
         """
+        NOTE: APIConnection will soon be made deprecated by APIInterface.
+
         Initialise the main APIConnection. Since APIConnection is a singleton object, any further "initialisations"
         will not re-initialise the instance but just retrieve the existing instance. To reassign an API key,
         retrieve the Singleton instance and call "reset" with the key.
@@ -454,9 +455,12 @@ class APIResponse(object):
 
 
 class SteamObject(object):
+    """
+    A base class for all rich Steam objects. (SteamUser, SteamApp, etc.)
+    """
     @property
     def id(self):
-        return self._id
+        return self._id  # "_id" is set by the child class.
 
     def __repr__(self):
         try:
