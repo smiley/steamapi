@@ -17,12 +17,13 @@ APITypes = {'bool':      bool,
             'uint32':    int,
             'uint64':    int,
             'string':    [str],
-            'rawbinary': [str, buffer]}
+            'rawbinary': [str, bytes]}
             
 if sys.version_info.major < 3:
     # Starting with Python 3, "str" means unicode and "unicode" is not defined. It is
     # still relevant for Python 2.x, however.
     APITypes['string'] += [unicode]
+    APITypes['rawbinary'] += [buffer]
 
 
 class APICall(object):
