@@ -364,3 +364,5 @@ class _shims:
         sanitize_for_console = Python3.sanitize_for_console
     else:
         sanitize_for_console = Python2.sanitize_for_console
+        
+    sanitize_for_console = staticmethod(sanitize_for_console)
