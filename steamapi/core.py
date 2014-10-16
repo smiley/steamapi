@@ -27,10 +27,11 @@ if sys.version_info.major < 3:
 
 
 class APICall(object):
-    _QUERY_DOMAIN = "http://api.steampowered.com"
-    _QUERY_TEMPLATE = "{domain}/".format(domain=_QUERY_DOMAIN)
+	_QUERY_PROTOCOL = "http"
+    _QUERY_DOMAIN = "api.steampowered.com"
+    _QUERY_TEMPLATE = "{proto}://{domain}/".format(proto=_QUERY_PROTOCOL, domain=_QUERY_DOMAIN)
 
-    def __init__(self, api_id, parent=None, method=None):
+    def __init__(self, api_id, parent=None, method=None, api_key=None):
         """
         Create a new APICall instance.
 
@@ -40,6 +41,8 @@ class APICall(object):
         :type parent: APICall
         :param method: The HTTP method used for calling the API.
         :type method: str
+		:param api_key: An API key, used when calling the API method.
+		:type api_key: str
         :return: A new instance of APICall.
         :rtype: APICall
         """
@@ -47,6 +50,7 @@ class APICall(object):
         self._is_registered = False
         self._parent = parent
         self._method = method
+        self._api_key = api_key
 
         # Set an empty documentation for now.
         self._api_documentation = ""
@@ -93,7 +97,7 @@ class APICall(object):
                         # necessary to keep it from constantly making new APICall instances. (a significant slowdown)
                         raise
                 # Not an expected item, so generate a new APICall!
-                return APICall(item, self)
+                return APICall(item, self, api_key=self._api_key)
 
     def __iter__(self):
         return self.__dict__.__iter__()
@@ -146,7 +150,11 @@ class APICall(object):
         else:
             kwargs["format"] = "json"
 
-        if APIConnection()._api_key is not None:
+        if self._api_key is not None:
+            kwargs["key"] = self._api_key
+        elif APIConnection()._api_key is not None:
+            # Fallback to globally-set APIConnection key.
+            # TODO: Deprecate.
             kwargs["key"] = APIConnection()._api_key
 
         query = str(self)
@@ -172,6 +180,9 @@ class APICall(object):
                 return APIResponse(response_obj['response'])
             else:
                 return APIResponse(response_obj)
+        else:
+            if kwargs["format"] == "json":
+                return response.json()
 
 
 class APIInterface(object):
@@ -227,7 +238,7 @@ class APIInterface(object):
         api_definition = self.ISteamWebAPIUtil.GetSupportedAPIList.v0001(key=self._api_key)
 
         for interface in api_definition.apilist.interfaces:
-            interface_object = APICall(interface.name)
+            interface_object = APICall(interface.name, api_key=self._api_key)
             parameter_description = "{indent}{{requirement}} {{type}} {{name}}:{indent}{{desc}}".format(indent='\t')
             # Unindented so that the docstring won't be overly indented.
             docstring = \
@@ -241,10 +252,10 @@ Parameters:
                 if method.name in interface_object:
                     base_method_object = interface_object.__getattribute__(method.name)
                 else:
-                    base_method_object = APICall(method.name, interface_object, method.httpmethod)
+                    base_method_object = APICall(method.name, interface_object, method.httpmethod, api_key=self._api_key)
                 # API calls have version-specific definitions, so backwards compatibility could be maintained.
                 # However, the Web API returns versions as integers (1, 2, etc.) but accepts them as "v?" (v1, v2, etc.)
-                method_object = APICall('v' + str(method.version), base_method_object, method.httpmethod)
+                method_object = APICall('v' + str(method.version), base_method_object, method.httpmethod, api_key=self._api_key)
 
                 parameters = []
                 for parameter in method.parameters:
