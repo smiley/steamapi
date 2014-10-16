@@ -84,4 +84,3 @@ def raiseAppropriateException(status_code):
             raise APIFailure()
     elif status_code / 100 == 5:
         raise APIError()
-

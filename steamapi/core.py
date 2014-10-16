@@ -4,7 +4,7 @@ import requests
 import sys
 import time
 
-from .consts import IPYTHON_PEEVES, IPYTHON_MODE
+from .consts import API_CALL_DOCSTRING_TEMPLATE, API_CALL_PARAMETER_TEMPLATE, IPYTHON_PEEVES, IPYTHON_MODE
 from .decorators import Singleton, cached_property, INFINITE
 from . import errors
 
@@ -239,23 +239,16 @@ class APIInterface(object):
 
         for interface in api_definition.apilist.interfaces:
             interface_object = APICall(interface.name, api_key=self._api_key)
-            parameter_description = "{indent}{{requirement}} {{type}} {{name}}:{indent}{{desc}}".format(indent='\t')
-            # Unindented so that the docstring won't be overly indented.
-            docstring = \
-"""
-{name}
+            parameter_description = API_CALL_PARAMETER_TEMPLATE.format(indent='\t')
 
-Parameters:
-{parameter_list}
-"""
             for method in interface.methods:
                 if method.name in interface_object:
                     base_method_object = interface_object.__getattribute__(method.name)
                 else:
-                    base_method_object = APICall(method.name, interface_object, method.httpmethod, api_key=self._api_key)
+                    base_method_object = APICall(method.name, interface_object, method.httpmethod, self._api_key)
                 # API calls have version-specific definitions, so backwards compatibility could be maintained.
                 # However, the Web API returns versions as integers (1, 2, etc.) but accepts them as "v?" (v1, v2, etc.)
-                method_object = APICall('v' + str(method.version), base_method_object, method.httpmethod, api_key=self._api_key)
+                method_object = APICall('v' + str(method.version), base_method_object, method.httpmethod, self._api_key)
 
                 parameters = []
                 for parameter in method.parameters:
@@ -271,8 +264,8 @@ Parameters:
                                                                 name=parameter.name,
                                                                 desc=desc)]
                 # Now build the docstring.
-                func_docstring = docstring.format(name=method.name,
-                                                  parameter_list='\n'.join(parameters))
+                func_docstring = API_CALL_DOCSTRING_TEMPLATE.format(name=method.name,
+                                                                    parameter_list='\n'.join(parameters))
                 # Set the docstring appropriately
                 method_object._api_documentation = func_docstring
                 #method_object.__call__.__func__.__doc__ = func_docstring
@@ -310,8 +303,6 @@ Parameters:
             raise AttributeError("Cannot set attributes to a strict '{cls}' object.".format(cls=type(self).__name__))
         else:
             return super(type(self), self).__setattr__(name, value)
-
-
 
 
 @Singleton

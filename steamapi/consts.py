@@ -33,3 +33,13 @@ except NameError:
     # clause False, without doing unnecessary checks.)
     IPYTHON_PEEVES = []
     IPYTHON_MODE = False
+
+# Unindented so that the docstring won't be overly indented.
+API_CALL_DOCSTRING_TEMPLATE = \
+"""
+{name}
+
+Parameters:
+{parameter_list}
+"""
+API_CALL_PARAMETER_TEMPLATE = "{indent}{{requirement}} {{type}} {{name}}:{indent}{{desc}}"
