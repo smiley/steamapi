@@ -39,7 +39,7 @@ class APICall(object):
         :type api_id: str
         :param parent: The APICall parent of this object. Can be None if this is a Service or Interface.
         :type parent: APICall
-        :param method: The HTTP method used for calling the API.`
+        :param method: The HTTP method used for calling the API.
         :type method: str
         :param api_key: An API key, used when calling the API method.
         :type api_key: str
