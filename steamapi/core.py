@@ -183,6 +183,8 @@ class APICall(object):
         else:
             if kwargs["format"] == "json":
                 return response.json()
+            else:
+                return response.content
 
 
 class APIInterface(object):
