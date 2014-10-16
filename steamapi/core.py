@@ -27,7 +27,7 @@ if sys.version_info.major < 3:
 
 
 class APICall(object):
-	_QUERY_PROTOCOL = "http"
+    _QUERY_PROTOCOL = "http"
     _QUERY_DOMAIN = "api.steampowered.com"
     _QUERY_TEMPLATE = "{proto}://{domain}/".format(proto=_QUERY_PROTOCOL, domain=_QUERY_DOMAIN)
 
@@ -41,8 +41,8 @@ class APICall(object):
         :type parent: APICall
         :param method: The HTTP method used for calling the API.
         :type method: str
-		:param api_key: An API key, used when calling the API method.
-		:type api_key: str
+        :param api_key: An API key, used when calling the API method.
+        :type api_key: str
         :return: A new instance of APICall.
         :rtype: APICall
         """
