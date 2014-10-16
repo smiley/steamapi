@@ -39,7 +39,7 @@ class APICall(object):
         :type api_id: str
         :param parent: The APICall parent of this object. Can be None if this is a Service or Interface.
         :type parent: APICall
-        :param method: The HTTP method used for calling the API.
+        :param method: The HTTP method used for calling the API.`
         :type method: str
         :param api_key: An API key, used when calling the API method.
         :type api_key: str
@@ -237,7 +237,7 @@ class APIInterface(object):
     def _autopopulate_interfaces(self):
         # Call the API which returns a list of API Services and Interfaces.
         # API definitions describe how the Interfaces and Services are built up, including parameter names & types.
-        api_definition = self.ISteamWebAPIUtil.GetSupportedAPIList.v0001(key=self._api_key)
+        api_definition = self.ISteamWebAPIUtil.GetSupportedAPIList.v1(key=self._api_key)
 
         for interface in api_definition.apilist.interfaces:
             interface_object = APICall(interface.name, api_key=self._api_key)
