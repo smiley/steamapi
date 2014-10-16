@@ -30,6 +30,6 @@ try:
     IPYTHON_MODE = True
 except NameError:
     # IPython's not running us. Don't special-case it. (An empty list instantly makes any "if name in IPYTHON_PEEVES"
-    # clause False, without doing unnecessary checks.
+    # clause False, without doing unnecessary checks.)
     IPYTHON_PEEVES = []
     IPYTHON_MODE = False
