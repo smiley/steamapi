@@ -4,6 +4,7 @@ import requests
 import sys
 import time
 
+from .consts import API_CALL_DOCSTRING_TEMPLATE, API_CALL_PARAMETER_TEMPLATE, IPYTHON_PEEVES, IPYTHON_MODE
 from .decorators import Singleton, cached_property, INFINITE
 from .errors import APIException
 from . import errors
@@ -11,18 +12,49 @@ from . import errors
 GET = "GET"
 POST = "POST"
 
+# A mapping of all types accepted/required by the API to their Python equivalents.
+APITypes = {'bool':      bool,
+            'int32':     int,
+            'uint32':    int,
+            'uint64':    int,
+            'string':    [str],
+            'rawbinary': [str, bytes]}
+            
+if sys.version_info.major < 3:
+    # Starting with Python 3, "str" means unicode and "unicode" is not defined. It is
+    # still relevant for Python 2.x, however.
+    APITypes['string'] += [unicode]
+    APITypes['rawbinary'] += [buffer]
+
 
 class APICall(object):
-    _QUERY_DOMAIN = "http://api.steampowered.com"
-    _QUERY_TEMPLATE = "{domain}/".format(domain=_QUERY_DOMAIN)
+    _QUERY_PROTOCOL = "http"
+    _QUERY_DOMAIN = "api.steampowered.com"
+    _QUERY_TEMPLATE = "{proto}://{domain}/".format(proto=_QUERY_PROTOCOL, domain=_QUERY_DOMAIN)
 
-    def __init__(self, api_id, parent=None):
+    def __init__(self, api_id, parent=None, method=None, api_key=None):
+        """
+        Create a new APICall instance.
+
+        :param api_id: The API's string-based ID. Must start with a letter, as per Python's rules for attributes.
+        :type api_id: str
+        :param parent: The APICall parent of this object. Can be None if this is a Service or Interface.
+        :type parent: APICall
+        :param method: The HTTP method used for calling the API.
+        :type method: str
+        :param api_key: An API key, used when calling the API method.
+        :type api_key: str
+        :return: A new instance of APICall.
+        :rtype: APICall
+        """
         self._api_id = api_id
         self._is_registered = False
         self._parent = parent
-        # IPython always looks for this, no matter what (hiding it in __dir__ doesn't work), so this is
-        # necessary to keep it from constantly making new APICall instances. (a significant slowdown)
-        self.trait_names = lambda: None
+        self._method = method
+        self._api_key = api_key
+
+        # Set an empty documentation for now.
+        self._api_documentation = ""
 
     def __str__(self):
         """
@@ -57,10 +89,30 @@ class APICall(object):
             try:
                 return super(APICall, self).__getattribute__(item)
             except AttributeError:
+                if IPYTHON_MODE is True:
+                    # We're in IPython. Which means "getdoc()" is also automatically used for docstrings!
+                    if item == "getdoc":
+                        return lambda: self._api_documentation
+                    elif item in IPYTHON_PEEVES:
+                        # IPython always looks for this, no matter what (hiding it in __dir__ doesn't work), so this is
+                        # necessary to keep it from constantly making new APICall instances. (a significant slowdown)
+                        raise
                 # Not an expected item, so generate a new APICall!
-                return APICall(item, self)
+                return APICall(item, self, api_key=self._api_key)
 
-    def _register(self, apicall_child):
+    def __iter__(self):
+        return self.__dict__.__iter__()
+
+    def _set_documentation(self, docstring):
+        """
+        Set a docstring specific to this instance of APICall, explaining the bound function.
+
+        :param docstring: The relevant docstring.
+        :return: None
+        """
+        self._api_documentation = docstring
+
+    def _register(self, apicall_child=None):
         """
         Register a child APICall object under the "self._resolved_children" dictionary so it can be used
         normally. Used by API function wrappers after they're deemed working.
@@ -68,14 +120,15 @@ class APICall(object):
         :param apicall_child: A working APICall object that should be stored as resolved.
         :type apicall_child: APICall
         """
-        if hasattr(self, apicall_child._api_id) and \
-           apicall_child is self.__getattribute__(apicall_child._api_id):
-            raise KeyError("This API ID is already taken by another API function!")
+        if apicall_child is not None:
+            if apicall_child._api_id in self.__dict__ \
+               and apicall_child is not self.__dict__[apicall_child._api_id]:
+                raise KeyError("This API ID is already taken by another API function!")
+        if self._parent is not None:
+            self._parent._register(self)
         else:
-            if self._parent is not None:
-                self._parent._register(self)
-            else:
-                self._is_registered = True
+            self._is_registered = True
+        if apicall_child is not None:
             self.__setattr__(apicall_child._api_id, apicall_child)
             apicall_child._is_registered = True
 
@@ -98,10 +151,17 @@ class APICall(object):
         else:
             kwargs["format"] = "json"
 
-        if APIConnection()._api_key is not None:
+        if self._api_key is not None:
+            kwargs["key"] = self._api_key
+        elif APIConnection()._api_key is not None:
+            # Fallback to globally-set APIConnection key.
+            # TODO: Deprecate.
             kwargs["key"] = APIConnection()._api_key
 
         query = str(self)
+
+        if self._method is not None:
+            method = self._method
 
         if method == POST:
             response = requests.request(method, query, data=kwargs)
@@ -121,6 +181,132 @@ class APICall(object):
                 return APIResponse(response_obj['response'])
             else:
                 return APIResponse(response_obj)
+        else:
+            if kwargs["format"] == "json":
+                return response.json()
+            else:
+                return response.content
+
+
+class APIInterface(object):
+    def __init__(self, api_key=None, autopopulate=False, strict=False, settings={}):
+        """
+        Initialize a new APIInterface object. This object defines an API-interacting session, and is used to call
+        any API functions from standard code.
+
+        :param api_key: Your Steam Web API key. Can be left blank, but some APIs will not work.
+        :type api_key: str
+        :param autopopulate: Whether the interfaces, services and methods supported by the Steam Web API should be \
+        auto-populated during initialization.
+        :type autopopulate: bool
+        :param strict: Should the interface enforce access only to defined functions, and only as defined. Only \
+        applicable if :var autopopulate: is True.
+        :type strict: bool
+        :param settings: A dictionary which defined advanced settings.
+        :type settings: dict
+        :return:
+        """
+        if autopopulate is False and strict is True:
+            raise ValueError("\"strict\" is only applicable if \"autopopulate\" is set to True.")
+
+        if issubclass(type(api_key), str) and len(api_key) == 0:
+            # We were given an empty key (== no key), but the API's equivalent of "no key" is None.
+            api_key = None
+
+        super_self = super(type(self), self)
+
+        # Initialization routines must use the original __setattr__ function, because they might collide with the
+        # overridden "__setattr__", which expects a fully-built instance to exist before being called.
+        def set_attribute(name, value):
+            return super_self.__setattr__(name, value)
+
+        set_attribute('_api_key', api_key)
+        set_attribute('_strict', strict)
+        set_attribute('_settings', settings)
+
+        if autopopulate is True:
+            # TODO: Autopopulation should be long-term-cached somewhere for future use, since it won't change much.
+
+            # Regardless of "strict mode", it has to be OFF during auto-population.
+            original_strict_value = self._strict
+            try:
+                self.__dict__['_strict'] = False
+                self._autopopulate_interfaces()
+            finally:
+                self.__dict__['_strict'] = original_strict_value
+
+    def _autopopulate_interfaces(self):
+        # Call the API which returns a list of API Services and Interfaces.
+        # API definitions describe how the Interfaces and Services are built up, including parameter names & types.
+        api_definition = self.ISteamWebAPIUtil.GetSupportedAPIList.v1(key=self._api_key)
+
+        for interface in api_definition.apilist.interfaces:
+            interface_object = APICall(interface.name, api_key=self._api_key)
+            parameter_description = API_CALL_PARAMETER_TEMPLATE.format(indent='\t')
+
+            for method in interface.methods:
+                if method.name in interface_object:
+                    base_method_object = interface_object.__getattribute__(method.name)
+                else:
+                    base_method_object = APICall(method.name, interface_object, method.httpmethod, self._api_key)
+                # API calls have version-specific definitions, so backwards compatibility could be maintained.
+                # However, the Web API returns versions as integers (1, 2, etc.) but accepts them as "v?" (v1, v2, etc.)
+                method_object = APICall('v' + str(method.version), base_method_object, method.httpmethod, self._api_key)
+
+                parameters = []
+                for parameter in method.parameters:
+                    parameter_requirement = "REQUIRED"
+                    if parameter.optional is True:
+                        parameter_requirement = "OPTIONAL"
+                    if 'description' in parameter:
+                        desc = parameter.description
+                    else:
+                        desc = "(no description)"
+                    parameters += [parameter_description.format(requirement=parameter_requirement,
+                                                                type=parameter.type,
+                                                                name=parameter.name,
+                                                                desc=desc)]
+                # Now build the docstring.
+                func_docstring = API_CALL_DOCSTRING_TEMPLATE.format(name=method.name,
+                                                                    parameter_list='\n'.join(parameters))
+                # Set the docstring appropriately
+                method_object._api_documentation = func_docstring
+                #method_object.__call__.__func__.__doc__ = func_docstring
+
+                # Now call the standard registration method.
+                method_object._register()
+            # And now, add it to the APIInterface.
+            self.__setattr__(interface.name, interface_object)
+
+    def __getattr__(self, name):
+        """
+        Creates a new APICall() instance if "strict" is disabled.
+
+        :param name: A Service or Interface name.
+        :return: A Pythonic object used to access the remote Service or Interface. (APICall)
+        :rtype: APICall
+        """
+        if name.startswith('_'):
+            return super(type(self), self).__getattribute__(name)
+        elif name in IPYTHON_PEEVES:
+            # IPython always looks for this, no matter what (hiding it in __dir__ doesn't work), so this is
+            # necessary to keep it from constantly making new APICall instances. (a significant slowdown)
+            raise AttributeError()
+        else:
+            if self._strict is True:
+                raise AttributeError("Strict '{cls}' object has no attribute '{attr}'".format(cls=type(self).__name__,
+                                                                                              attr=name))
+            new_service = APICall(name)
+            # Save this service.
+            self.__dict__[name] = new_service
+            return new_service
+
+    def __setattr__(self, name, value):
+        if self._strict is True:
+            raise AttributeError("Cannot set attributes to a strict '{cls}' object.".format(cls=type(self).__name__))
+        else:
+            return super(type(self), self).__setattr__(name, value)
+
 
 @Singleton
 class APIConnection(object):
@@ -130,6 +316,8 @@ class APIConnection(object):
 
     def __init__(self, api_key=None, settings={}):
         """
+        NOTE: APIConnection will soon be made deprecated by APIInterface.
+
         Initialise the main APIConnection. Since APIConnection is a singleton object, any further "initialisations"
         will not re-initialise the instance but just retrieve the existing instance. To reassign an API key,
         retrieve the Singleton instance and call "reset" with the key.
@@ -262,7 +450,8 @@ class APIResponse(object):
             if item in self._real_dictionary:
                 return self._real_dictionary[item]
             else:
-                return None
+                raise AttributeError("'{cls}' has no attribute '{attr}'".format(cls=type(self).__name__,
+                                                                                attr=item))
 
     def __getitem__(self, item):
         return self._real_dictionary[item]
@@ -272,9 +461,12 @@ class APIResponse(object):
 
 
 class SteamObject(object):
+    """
+    A base class for all rich Steam objects. (SteamUser, SteamApp, etc.)
+    """
     @property
     def id(self):
-        return self._id
+        return self._id  # "_id" is set by the child class.
 
     def __repr__(self):
         try:
