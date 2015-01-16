@@ -28,22 +28,17 @@ if sys.version_info.major < 3:
 
 
 class APICall(object):
-    _QUERY_PROTOCOL = "http"
-    _QUERY_DOMAIN = "api.steampowered.com"
-    _QUERY_TEMPLATE = "{proto}://{domain}/".format(proto=_QUERY_PROTOCOL, domain=_QUERY_DOMAIN)
-
-    def __init__(self, api_id, parent=None, method=None, api_key=None):
+    def __init__(self, api_id, parent, method=None):
         """
         Create a new APICall instance.
 
         :param api_id: The API's string-based ID. Must start with a letter, as per Python's rules for attributes.
         :type api_id: str
-        :param parent: The APICall parent of this object. Can be None if this is a Service or Interface.
-        :type parent: APICall
+        :param parent: The APICall parent of this object. If this is a service or interface, an APIInterface instance is
+        given instead.
+        :type parent: APICall or APIInterface
         :param method: The HTTP method used for calling the API.
         :type method: str
-        :param api_key: An API key, used when calling the API method.
-        :type api_key: str
         :return: A new instance of APICall.
         :rtype: APICall
         """
@@ -51,17 +46,51 @@ class APICall(object):
         self._is_registered = False
         self._parent = parent
         self._method = method
-        self._api_key = api_key
+
+        # Cached data.
+        self._cached_key = None
+        self._query = ""
 
         # Set an empty documentation for now.
         self._api_documentation = ""
+
+    @property
+    def _api_key(self):
+        """
+        Fetch the appropriate API key, if applicable.
+
+        If a key is defined in this call's APIInterface "grandparent" (since each APICall has a APICall parent), it is
+        used and cached by this object indefinitely. (Until destruction)
+
+        Otherwise, nothing (None) will be returned.
+
+        :return: A Steam Web API key in the form of a string, or None if not available.
+        :rtype: str or None
+        """
+        if self._cached_key is not None:
+            return self._cached_key
+
+        if self._parent is not None:
+            self._cached_key = self._parent._api_key
+            return self._cached_key
+
+        # No key is available. (This is OK)
+        return None
+
+    def _build_query(self):
+        if self._query != "":
+            return self._query
+
+        # Build the query by calling "str" on ourselves, which recursively calls "str" on each parent in the chain.
+        self._query = str(self)
+        return self._query
 
     def __str__(self):
         """
         Generate the function URL.
         """
-        if self._parent is None:
-            return self._QUERY_TEMPLATE + self._api_id + '/'
+        if type(self._parent) is APIInterface:
+            return self._parent._query_template + self._api_id + '/'
         else:
             return str(self._parent) + self._api_id + '/'
 
@@ -98,7 +127,7 @@ class APICall(object):
                         # necessary to keep it from constantly making new APICall instances. (a significant slowdown)
                         raise
                 # Not an expected item, so generate a new APICall!
-                return APICall(item, self, api_key=self._api_key)
+                return APICall(item, self)
 
     def __iter__(self):
         return self.__dict__.__iter__()
@@ -124,7 +153,7 @@ class APICall(object):
             if apicall_child._api_id in self.__dict__ \
                and apicall_child is not self.__dict__[apicall_child._api_id]:
                 raise KeyError("This API ID is already taken by another API function!")
-        if self._parent is not None:
+        if type(self._parent) is not APIInterface:
             self._parent._register(self)
         else:
             self._is_registered = True
@@ -132,7 +161,15 @@ class APICall(object):
             self.__setattr__(apicall_child._api_id, apicall_child)
             apicall_child._is_registered = True
 
-    def __call__(self, method=GET, **kwargs):
+    def _convert_arguments(self, kwargs):
+        """
+        Convert the types of given arguments to a call-friendly format. Modifies the given dictionary directly.
+
+        :param kwargs: The keyword-arguments dictionary, passed on to the calling function.
+        :type kwargs: dict
+        :return: None, as the given dictionary is changed in-place.
+        :rtype: None
+        """
         for argument in kwargs:
             if issubclass(type(kwargs[argument]), list):
                 # The API takes multiple values in a "a,b,c" structure, so we
@@ -145,6 +182,9 @@ class APICall(object):
                 else:
                     kwargs[argument] = 0
 
+    def __call__(self, method=GET, **kwargs):
+        self._convert_arguments(kwargs)
+
         automatic_parsing = True
         if "format" in kwargs:
             automatic_parsing = False
@@ -153,11 +193,8 @@ class APICall(object):
 
         if self._api_key is not None:
             kwargs["key"] = self._api_key
-        elif APIConnection()._api_key is not None:
-            # Fallback to globally-set APIConnection key.
-            # TODO: Deprecate.
-            kwargs["key"] = APIConnection()._api_key
 
+        # Format the final query.
         query = str(self)
 
         if self._method is not None:
@@ -189,7 +226,9 @@ class APICall(object):
 
 
 class APIInterface(object):
-    def __init__(self, api_key=None, autopopulate=False, strict=False, settings={}):
+
+    def __init__(self, api_key=None, autopopulate=False, strict=False,
+                 api_domain="api.steampowered.com", api_protocol="http", settings=None):
         """
         Initialize a new APIInterface object. This object defines an API-interacting session, and is used to call
         any API functions from standard code.
@@ -202,16 +241,27 @@ class APIInterface(object):
         :param strict: Should the interface enforce access only to defined functions, and only as defined. Only \
         applicable if :var autopopulate: is True.
         :type strict: bool
-        :param settings: A dictionary which defined advanced settings.
+        :param api_domain:
+        :param settings: A dictionary which defines advanced settings.
         :type settings: dict
         :return:
         """
         if autopopulate is False and strict is True:
             raise ValueError("\"strict\" is only applicable if \"autopopulate\" is set to True.")
 
+        if api_protocol not in ("http", "https"):
+            raise ValueError("\"api_protocol\" must either be \"http\" or \"https\".")
+
+        if '/' in api_domain:
+            raise ValueError("\"api_domain\" should only contain the domain name itself, without any paths or queries.")
+
         if issubclass(type(api_key), str) and len(api_key) == 0:
             # We were given an empty key (== no key), but the API's equivalent of "no key" is None.
             api_key = None
+
+        if settings is None:
+            # Working around mutable argument defaults.
+            settings = dict()
 
         super_self = super(type(self), self)
 
@@ -223,6 +273,9 @@ class APIInterface(object):
         set_attribute('_api_key', api_key)
         set_attribute('_strict', strict)
         set_attribute('_settings', settings)
+
+        query_template = "{proto}://{domain}/".format(proto=api_protocol, domain=api_domain)
+        set_attribute('_query_template', query_template)
 
         if autopopulate is True:
             # TODO: Autopopulation should be long-term-cached somewhere for future use, since it won't change much.
@@ -241,17 +294,17 @@ class APIInterface(object):
         api_definition = self.ISteamWebAPIUtil.GetSupportedAPIList.v1(key=self._api_key)
 
         for interface in api_definition.apilist.interfaces:
-            interface_object = APICall(interface.name, api_key=self._api_key)
+            interface_object = APICall(interface.name, self)
             parameter_description = API_CALL_PARAMETER_TEMPLATE.format(indent='\t')
 
             for method in interface.methods:
                 if method.name in interface_object:
                     base_method_object = interface_object.__getattribute__(method.name)
                 else:
-                    base_method_object = APICall(method.name, interface_object, method.httpmethod, self._api_key)
+                    base_method_object = APICall(method.name, interface_object, method.httpmethod)
                 # API calls have version-specific definitions, so backwards compatibility could be maintained.
                 # However, the Web API returns versions as integers (1, 2, etc.) but accepts them as "v?" (v1, v2, etc.)
-                method_object = APICall('v' + str(method.version), base_method_object, method.httpmethod, self._api_key)
+                method_object = APICall('v' + str(method.version), base_method_object, method.httpmethod)
 
                 parameters = []
                 for parameter in method.parameters:
@@ -271,12 +324,11 @@ class APIInterface(object):
                                                                     parameter_list='\n'.join(parameters))
                 # Set the docstring appropriately
                 method_object._api_documentation = func_docstring
-                #method_object.__call__.__func__.__doc__ = func_docstring
 
                 # Now call the standard registration method.
                 method_object._register()
             # And now, add it to the APIInterface.
-            self.__setattr__(interface.name, interface_object)
+            setattr(self, interface.name, interface_object)
 
     def __getattr__(self, name):
         """
@@ -296,7 +348,7 @@ class APIInterface(object):
             if self._strict is True:
                 raise AttributeError("Strict '{cls}' object has no attribute '{attr}'".format(cls=type(self).__name__,
                                                                                               attr=name))
-            new_service = APICall(name)
+            new_service = APICall(name, self)
             # Save this service.
             self.__dict__[name] = new_service
             return new_service
