@@ -8,7 +8,7 @@ It's a Python library for accessing Steam's [Web API](http://steamcommunity.com/
 It's super-easy to use, straightforward and designed for continuous use. Finally, an easy way to interface with Steam!
 
 ## How?
-With some abstraction, Pythonic classes and ~~magic~~ tricks. Essentially, I use [*requests*](/kennethreitz/requests) for the actual communication, a few converter classes for parsing the output and making it a proper object, and some well-timed caching to make sure lazy-initialization doesn't get you down.
+With some abstraction, Pythonic classes and ~~magic~~ tricks. Essentially, I use [*requests*](//github.com/kennethreitz/requests) for the actual communication, a few converter classes for parsing the output and making it a proper object, and some well-timed caching to make sure lazy-initialization doesn't get you down.
 
 ## How do I use this?
 Like so!
@@ -87,7 +87,7 @@ if __name__ == '__main__':
 </html>
 ```
 
-Wanna try it out for yourself? I deployed it to a ~~[Google App Engine instance](http://smileybarry-example.appspot.com/user/smileybarry)~~. **(Looks like Steam's Web API is laggy enough that Google App Engine timeouts my requests. I recommend [cloning it locally](https://github.com/smiley/steamapi-flask-example) and running main.py)**. Exactly the same code. (Except I used my key instead of "YOURKEYHERE")
+Wanna try it out for yourself? I deployed it to a [Google App Engine instance](http://smileybarry-example.appspot.com/user/smileybarry). Exactly the same code. (Except I used my key instead of "YOURKEYHERE")
 
 (This is based off of [*Google App Engine's* Python + Flask example](https://developers.google.com/appengine/))
 
