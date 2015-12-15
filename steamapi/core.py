@@ -205,8 +205,7 @@ class APICall(object):
         else:
             response = requests.request(method, query, params=kwargs)
 
-        if response.status_code != 200:
-            errors.raiseAppropriateException(response.status_code)
+        errors.check(response)
 
         # Store the object for future reference.
         if self._is_registered is False:
@@ -406,7 +405,7 @@ class APIConnection(object):
                        If APIConnection has an assoociated key, "key" will be overwritten by it, and overriding "format"
                        cancels out automatic parsing. (The resulting object WILL NOT be an APIResponse but a string.)
 
-        :rtype : APIResponse or str
+        :rtype: APIResponse
         """
         for argument in kwargs:
             if type(kwargs[argument]) is list:
@@ -436,8 +435,7 @@ class APIConnection(object):
         else:
             response = requests.request(method, query, params=kwargs)
 
-        if response.status_code != 200:
-            errors.raiseAppropriateException(response.status_code)
+        errors.check(response)
 
         if automatic_parsing is True:
             response_obj = response.json()

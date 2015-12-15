@@ -64,6 +64,19 @@ class APIUnauthorized(APIFailure):
     pass
 
 
+class APIKeyRequired(APIFailure):
+    """
+    This API requires an API key to call and does not support anonymous requests.
+    """
+    pass
+
+
+class APIPrivate(APIFailure):
+    """
+    The API you're trying to call requires a privileged API key. Your existing key is not allowed to call this.
+    """
+
+
 class APIConfigurationError(APIFailure):
     """
     There's either no APIConnection defined, or
@@ -71,17 +84,25 @@ class APIConfigurationError(APIFailure):
     pass
 
 
-@debug.no_return
-def raiseAppropriateException(status_code):
-    if status_code // 100 == 4:
-        if status_code == 404:
+def check(response):
+    """
+    :type response: requests.Response
+    """
+    if response.status_code // 100 == 4:
+        if response.status_code == 404:
             raise APINotFound()
-        elif status_code == 401:
+        elif response.status_code == 401:
             raise APIUnauthorized()
-        elif status_code == 400:
+        elif response.status_code == 403:
+            if '?key=' in response.request.url or '&key=' in response.request.url:
+                raise APIPrivate()
+            else:
+                raise APIKeyRequired()
+        elif response.status_code == 400:
             raise APIBadCall()
         else:
             raise APIFailure()
-    elif status_code // 100 == 5:
+    elif response.status_code // 100 == 5:
         raise APIError()
-
+    else:
+        return
