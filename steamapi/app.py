@@ -19,6 +19,31 @@ class SteamApp(SteamObject):
         self._owner = owner
         self._userid = self._owner
 
+    # Factory methods
+    @staticmethod
+    def from_api_response(api_json, associated_userid=None):
+        """
+        Create a new SteamApp instance from an APIResponse object.
+
+        :param api_json: The raw JSON returned by the API, in "APIResponse" form.
+        :type api_json: steamapi.core.APIResponse
+        :param associated_userid: A user ID associated to this game, if applicable. This can be the user who played the
+                                  app/game, or its owner if it is borrowed, depending on context.
+        :type associated_userid: long
+        :return: a new SteamApp instance
+        :rtype: SteamApp
+        """
+        if 'appid' not in api_json:
+            # An app ID is a bare minimum.
+            raise ValueError("An app ID is required to create a SteamApp object.")
+
+        appid = api_json.appid
+        name = None
+        if 'name' in api_json:
+            name = api_json.name
+
+        return SteamApp(appid, name, associated_userid)
+
     @cached_property(ttl=INFINITE)
     def _schema(self):
         return APIConnection().call("ISteamUserStats", "GetSchemaForGame", "v2", appid=self._id)
@@ -47,6 +72,9 @@ class SteamApp(SteamObject):
             userid = None
             unlocks = None
         achievements_list = []
+        if 'availableGameStats' not in self._schema.game:
+            # No stat data -- at all. This is a hidden app.
+            return achievements_list
         for achievement in self._schema.game.availableGameStats.achievements:
             achievement_obj = SteamAchievement(self._id, achievement.name, achievement.displayName, userid)
             achievement_obj._cache = {}
@@ -68,7 +96,10 @@ class SteamApp(SteamObject):
 
     @cached_property(ttl=INFINITE)
     def name(self):
-        return self._schema.game.gameName
+        if 'gameName' in self._schema.game:
+            return self._schema.game.gameName
+        else:
+            return "<Unknown>"
 
     @cached_property(ttl=INFINITE)
     def owner(self):

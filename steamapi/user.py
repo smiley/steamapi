@@ -146,7 +146,7 @@ class SteamUser(SteamObject):
         """
         games_list = []
         for game in raw_list:
-            game_obj = SteamApp(game.appid, game.name, associated_userid)
+            game_obj = SteamApp.from_api_response(game, associated_userid)
             if 'playtime_2weeks' in game:
                 game_obj.playtime_2weeks = game.playtime_2weeks
             if 'playtime_forever' in game:
@@ -210,7 +210,11 @@ class SteamUser(SteamObject):
         :rtype: SteamApp
         """
         if "gameid" in self._summary:
-            game = SteamApp(self._summary.gameid, self._summary.gameextrainfo)
+            if 'gameextrainfo' in self._summary:
+                game_name = self._summary.gameextrainfo
+            else:
+                game_name = None
+            game = SteamApp(self._summary.gameid, game_name)
             owner = APIConnection().call("IPlayerService", "IsPlayingSharedGame", "v0001",
                                          steamid=self._id,
                                          appid_playing=game.appid)
@@ -367,6 +371,10 @@ class SteamUser(SteamObject):
         :rtype: list of SteamApp
         """
         response = APIConnection().call("IPlayerService", "GetRecentlyPlayedGames", "v1", steamid=self.steamid)
+        if 'total_count' not in response:
+            # Private profiles will cause a special response, where the API doesn't tell us if there are
+            # any results *at all*. We just get a blank JSON document.
+            raise AccessException()
         if response.total_count == 0:
             return []
         return self._convert_games_list(response.games, self._id)

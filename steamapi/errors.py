@@ -10,6 +10,14 @@ class APIException(Exception):
     pass
 
 
+class AccessException(APIException):
+    """
+    You are attempting to query an object that you have no permission to query. (E.g.: private user,
+    hidden screenshot, etc.)
+    """
+    pass
+
+
 class APIUserError(APIException):
     """
     An API error caused by a user error, like wrong data or just empty results for a query.
