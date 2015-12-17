@@ -11,7 +11,7 @@ It's super-easy to use, straightforward and designed for continuous use. Finally
 With some abstraction, Pythonic classes and ~~magic~~ tricks. Essentially, I use [*requests*](//github.com/kennethreitz/requests) for the actual communication, a few converter classes for parsing the output and making it a proper object, and some well-timed caching to make sure lazy-initialization doesn't get you down.
 
 ## How do I use this?
-Like so!
+Like this!
 ```python
 >>> import steamapi
 >>> steamapi.core.APIConnection(api_key="ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -26,7 +26,7 @@ Or:
 [<SteamUser "Ryan" (9876543210987654321)>, <SteamUser "Tyler" (1234876598762345)>, ...]
 ```
 
-Or maybe even like this!
+Or maybe even like this:
 ```python
 ...
 >>> me.recently_played
@@ -34,22 +34,22 @@ Or maybe even like this!
 >>> me.games
 [<SteamApp "Counter-Strike: Source" (240)>, <SteamApp "Team Fortress Classic" (20)>, <SteamApp "Half-Life: Opposing Force" (50)>, ...]
 ```
-And yes, that would be *your entire games library*.
 
 ## More examples
 ### [Flask](http://flask.pocoo.org/)-based web service
 How about a Flask web service that tells a user how many games & friends he has?
-```python
-from flask import Flask
-from flask import render_template
-from steamapi import * # All submodules.
 
-app = Flask(__name__.split('.')[0])
+[`main.py`](/smiley/steamapi-flask-example/blob/master/main.py):
+```python
+from flask import Flask, render_template
+from steamapi import core, user
+
+app = Flask("Steamer")
+core.APIConnection(api_key="YOURKEYHERE")
 
 @app.route('/user/<name>')
 def hello(name=None):
   try:
-    core.APIConnection(api_key="YOURKEYHERE")
     try:
       steam_user = user.SteamUser(userid=int(name))
     except ValueError: # Not an ID, but a vanity URL.
@@ -59,37 +59,17 @@ def hello(name=None):
                                                                                   len(steam_user.friends),
                                                                                   len(steam_user.games))
     img = steam_user.avatar
+    return render_template('hello.html', name=name, content=content, img=img)
   except Exception as ex:
     # We might not have permission to the user's friends list or games, so just carry on with a blank message.
-    content = None
-    img = None
-  return render_template('hello.html', name=name, content=content, img=img)
+    return render_template('hello.html', name=name)
   
 if __name__ == '__main__':
   app.run()
 ```
+*(`hello.html` can be found [here](/smiley/steamapi-flask-example/blob/master/templates/hello.html))*
 
-(And "hello.html": )
-```html
-<!doctype html>
-<html>
-  <body>
-    <title>Hello there!</title>
-    {% if name %}
-      <h1>Hello {% if img %}<img src="{{ img }}" /> {% endif %}{{ name }}!</h1>
-    {% else %}
-      <h1>Hello Anonymous!</h1>
-    {% endif %}
-    {% if content %}
-      <p>{{ content }}</p>
-    {% endif %}
-  </body>
-</html>
-```
-
-Wanna try it out for yourself? I deployed it to a [Google App Engine instance](http://smileybarry-example.appspot.com/user/smileybarry). Exactly the same code. (Except I used my key instead of "YOURKEYHERE")
-
-(This is based off of [*Google App Engine's* Python + Flask example](https://developers.google.com/appengine/))
+You can [try it out for yourself](/smiley/steamapi-flask-example) by cloning/downloading a ZIP and [deploying it to Google App Engine](https://cloud.google.com/appengine/docs/python/tools/uploadinganapp?hl=en) for free.
 
 ---
 
@@ -97,16 +77,16 @@ The library was made for both easy use *and* easy prototyping. It supports auto-
 
 Note that you need an API key for most commands, **but** API keys can be obtained immediately, for free, from the [Steam Web API developer page](http://steamcommunity.com/dev).
 
-Don't be alarmed by its request for a domain; at this time of writing, the API also **does not** enforce which domain uses the key, so you can experiment freely.
+The API registration page requires a domain, but it's only a formality. It's not enforced by the API server.
 
 ## FAQ
 ### Does this work?
-Hell yeah! You can give the examples up above a shot and see for yourself, or you can just jump in and browse the API using an interpreter. I recommend [IPython](http://ipython.org), it has some awesome auto-completion, search & code inspection.
+Yep! You can try the examples above, or you can just jump in and browse the API using an interpreter. I recommend [IPython](http://ipython.org); it has some awesome auto-completion, search & code inspection.
 
-### How can I get * using the API? I can't find it here.
-Search the [wiki](/../../wiki). It's still far from done, but it should help you! You can also open a Python interpreter and play around with the library. It's suited for experimentation and prototyping, to help prevent these exact cases.
+### How can I get \* using the API? I can't find it here.
+You can open a Python interpreter and play around with the library. It's suited for experimentation and prototyping, to help prevent these exact cases. A full documentation will be available soon.
 
-If you still can't find it, I probably didn't implement it yet. This is still a work in progress. Don't worry though, I plan to have the entire public API mapped & available soon!
+If you still can't find it, I might've not implemented it yet. This is still a work in progress. Don't worry though, I plan to have the entire public API mapped & available soon!
 
 ### I have a feature/change that I think should go in. How can I participate?
 You can do one of two things:
@@ -117,7 +97,7 @@ You can do one of two things:
 No, and it's also not endorsed in any way by Valve Corporation. _(obligatory legal notice)_ I couldn't find a fitting name at this point for it, so I just skipped it for now.
 
 ### Can I use this library in my busy web app?
-No, not yet. :( I try to make sure I don't break anything when I make changes, but every now and then I might refactor it a bit. Right now, it's in a __shaky beta__ phase. (Why "shaky"? Because it's stable in terms of actual code, so "unstable" would be wrong.)
+No, but feel free to experiment with it. It's roughly stable right now, with many of the quirks fixed and most classes having a steady API. Small refactorings are rare, and I do plan to overhaul the object system to allow async/batching behaviour, but that's still a way off.
 
 ### Is this still actively-developed? The last commit is quite a while ago!
 Yes, but less than before. This is a side-project, and sadly work has become hectic enough that I have less time and energy to work on this & other side-projects.
