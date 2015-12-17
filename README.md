@@ -37,9 +37,8 @@ Or maybe even like this:
 
 ## More examples
 ### [Flask](http://flask.pocoo.org/)-based web service
-How about a Flask web service that tells a user how many games & friends he has?
+How about [a Flask web service that tells a user how many games & friends he has?](/smiley/steamapi-flask-example)
 
-[`main.py`](/smiley/steamapi-flask-example/blob/master/main.py):
 ```python
 from flask import Flask, render_template
 from steamapi import core, user
