@@ -588,6 +588,7 @@ def chunker(seq, size):
     :type seq: iterable
     :param size: The max size of the resulting batches
     :type size: int
+    :rtype: iterable
     """
     return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
 
