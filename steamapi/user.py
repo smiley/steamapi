@@ -1,13 +1,13 @@
 __author__ = 'SmileyBarry'
 
-from .core import APIConnection, SteamObject
+from .core import APIConnection, SteamObject, chunker
 
 from .app import SteamApp
 from .decorators import cached_property, INFINITE, MINUTE, HOUR
 from .errors import *
 
 import datetime
-
+import itertools
 
 class SteamUserBadge(SteamObject):
     def __init__(self, badge_id, level, completion_time, xp, scarcity, appid=None):
@@ -92,6 +92,8 @@ class SteamGroup(SteamObject):
 
 
 class SteamUser(SteamObject):
+    PLAYER_SUMMARIES_BATCH_SIZE = 350
+
     # OVERRIDES
     def __init__(self, userid=None, userurl=None):
         """
@@ -308,7 +310,7 @@ class SteamUser(SteamObject):
         :rtype: list of SteamUser
         """
         import time
-        
+
         response = APIConnection().call("ISteamUser", "GetFriendList", "v0001", steamid=self.steamid,
                                         relationship="friend")
         friends_list = []
@@ -325,10 +327,13 @@ class SteamUser(SteamObject):
             id_player_map = {str(friend.steamid): friend for friend in friends_list}
             ids = list(id_player_map.keys())
 
-            player_details = APIConnection().call("ISteamUser",
-                                                  "GetPlayerSummaries",
-                                                  "v0002",
-                                                  steamids=ids).players
+            player_details = list(itertools.chain.from_iterable(
+                APIConnection().call("ISteamUser",
+                                      "GetPlayerSummaries",
+                                      "v0002",
+                                      steamids=id_batch).players
+                for id_batch in chunker(ids, self.PLAYER_SUMMARIES_BATCH_SIZE)
+                ))
 
             now = time.time()
             for player_summary in player_details:
