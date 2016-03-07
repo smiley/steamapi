@@ -19,7 +19,7 @@ APITypes = {'bool':      bool,
             'uint64':    int,
             'string':    [str],
             'rawbinary': [str, bytes]}
-            
+
 if sys.version_info.major < 3:
     # Starting with Python 3, "str" means unicode and "unicode" is not defined. It is
     # still relevant for Python 2.x, however.
@@ -579,7 +579,19 @@ def expire(obj, property_name):
         del obj._cache[property_name]
     else:
         raise TypeError("This object type either doesn't visibly support caching, or has yet to initialise its cache.")
-        
+
+def chunker(seq, size):
+    """
+    Turn an iteratable into a iterable of iterables of size
+
+    :param seq: The target iterable
+    :type seq: iterable
+    :param size: The max size of the resulting batches
+    :type size: int
+    :rtype: iterable
+    """
+    return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
+
 class _shims:
     """
     A collection of functions used at junction points where a Python 3.x solution potentially degrades functionality
@@ -593,7 +605,7 @@ class _shims:
             non-ASCII characters.
             """
             return string.encode(errors="ignore")
-   
+
     class Python3:
         @staticmethod
         def sanitize_for_console(string):
@@ -601,10 +613,10 @@ class _shims:
             Sanitize a string for console presentation. Does nothing on Python 3.
             """
             return string
-            
+
     if sys.version_info.major >= 3:
         sanitize_for_console = Python3.sanitize_for_console
     else:
         sanitize_for_console = Python2.sanitize_for_console
-        
+
     sanitize_for_console = staticmethod(sanitize_for_console)
