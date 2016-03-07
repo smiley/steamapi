@@ -225,7 +225,6 @@ class APICall(object):
 
 
 class APIInterface(object):
-
     def __init__(self, api_key=None, autopopulate=False, strict=False,
                  api_domain="api.steampowered.com", api_protocol="http", settings=None):
         """
@@ -453,6 +452,7 @@ class APIResponse(object):
     Recursively wraps every response given to it, by replacing each 'dict' object with an
     APIResponse instance. Other types are safe.
     """
+
     def __init__(self, father_dict):
         # Initialize an empty dictionary.
         self._real_dictionary = {}
@@ -514,6 +514,7 @@ class SteamObject(object):
     """
     A base class for all rich Steam objects. (SteamUser, SteamApp, etc.)
     """
+
     @property
     def id(self):
         return self._id  # "_id" is set by the child class.
@@ -580,6 +581,7 @@ def expire(obj, property_name):
     else:
         raise TypeError("This object type either doesn't visibly support caching, or has yet to initialise its cache.")
 
+
 def chunker(seq, size):
     """
     Turn an iteratable into a iterable of iterables of size
@@ -592,11 +594,13 @@ def chunker(seq, size):
     """
     return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
 
+
 class _shims:
     """
     A collection of functions used at junction points where a Python 3.x solution potentially degrades functionality
     or performance on Python 2.x.
     """
+
     class Python2:
         @staticmethod
         def sanitize_for_console(string):

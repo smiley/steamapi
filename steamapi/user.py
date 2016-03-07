@@ -9,6 +9,7 @@ from .errors import *
 import datetime
 import itertools
 
+
 class SteamUserBadge(SteamObject):
     def __init__(self, badge_id, level, completion_time, xp, scarcity, appid=None):
         """
@@ -329,11 +330,11 @@ class SteamUser(SteamObject):
 
             player_details = list(itertools.chain.from_iterable(
                 APIConnection().call("ISteamUser",
-                                      "GetPlayerSummaries",
-                                      "v0002",
-                                      steamids=id_batch).players
+                                     "GetPlayerSummaries",
+                                     "v0002",
+                                     steamids=id_batch).players
                 for id_batch in chunker(ids, self.PLAYER_SUMMARIES_BATCH_SIZE)
-                ))
+            ))
 
             now = time.time()
             for player_summary in player_details:

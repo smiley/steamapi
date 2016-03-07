@@ -1,7 +1,8 @@
 __author__ = 'andrew'
 
-import uuid
 from .core import APIConnection
+
+import uuid
 
 
 class SteamIngameStore(object):
@@ -12,7 +13,8 @@ class SteamIngameStore(object):
     def get_user_microtxh_info(self, steamid):
         return APIConnection().call(self.interface, 'GetUserInfo', 'v1', steamid=steamid, appid=self.appid)
 
-    def init_purchase(self, steamid, itemid, amount, itemcount=1, language='en', currency='USD', qty=1, description='Some description'):
+    def init_purchase(self, steamid, itemid, amount, itemcount=1, language='en', currency='USD', qty=1,
+                      description='Some description'):
         params = {
             'steamid': steamid,
             'itemid[0]': itemid,
@@ -34,4 +36,5 @@ class SteamIngameStore(object):
         return APIConnection().call(self.interface, 'RefundTxn', 'v1', method='POST', appid=self.appid, orderid=orderid)
 
     def finalize_txh(self, orderid):
-        return APIConnection().call(self.interface, 'FinalizeTxn', 'v1', method='POST', appid=self.appid, orderid=orderid)
+        return APIConnection().call(self.interface, 'FinalizeTxn', 'v1', method='POST', appid=self.appid,
+                                    orderid=orderid)
