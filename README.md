@@ -66,9 +66,9 @@ def hello(name=None):
 if __name__ == '__main__':
   app.run()
 ```
-*(`hello.html` can be found [here](/smiley/steamapi-flask-example/blob/master/templates/hello.html))*
+*(`hello.html` can be found [here](//github.com/smiley/steamapi-flask-example/blob/master/templates/hello.html))*
 
-You can [try it out for yourself](/smiley/steamapi-flask-example) by cloning/downloading a ZIP and [deploying it to Google App Engine](https://cloud.google.com/appengine/docs/python/tools/uploadinganapp?hl=en) for free.
+You can [try it out for yourself](//github.com/smiley/steamapi-flask-example) by cloning/downloading a ZIP and [deploying it to Google App Engine](https://cloud.google.com/appengine/docs/python/tools/uploadinganapp?hl=en) for free.
 
 ---
 
