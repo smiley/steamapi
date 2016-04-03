@@ -79,7 +79,7 @@ Note that you need an API key for most commands, **but** API keys can be obtaine
 The API registration page requires a domain, but it's only a formality. It's not enforced by the API server.
 
 ## FAQ
-*Don't see your question here? More questions were [asked](/../../issues?q=is%3Aissue+label%3Aquestion) and [answered](/../../issues?q=is%3Aissue+label%3Aquestion-answered) in the "Issues" section, where you can also [ask it](/../../issues/new) if no one hasn't already.*
+*Don't see your question here? More questions were [asked](/../../issues?q=is%3Aissue+label%3Aquestion) and [answered](/../../issues?q=is%3Aissue+label%3Aquestion-answered) in the "Issues" section.*
 
 ### Does this work?
 Yep! You can try the examples above, or you can just jump in and browse the API using an interpreter. I recommend [IPython](http://ipython.org); it has some awesome auto-completion, search & code inspection.
