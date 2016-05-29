@@ -396,6 +396,10 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=True)
+        if 'game_count' not in response:
+            # Private profiles will cause a special response, where the API doesn't tell us if there are
+            # any results *at all*. We just get a blank JSON document.
+            raise AccessException()
         if response.game_count == 0:
             return []
         return self._convert_games_list(response.games, self._id)
@@ -411,6 +415,10 @@ class SteamUser(SteamObject):
                                         steamid=self.steamid,
                                         include_appinfo=True,
                                         include_played_free_games=False)
+        if 'game_count' not in response:
+            # Private profiles will cause a special response, where the API doesn't tell us if there are
+            # any results *at all*. We just get a blank JSON document.
+            raise AccessException()
         if response.game_count == 0:
             return []
         return self._convert_games_list(response.games, self._id)
