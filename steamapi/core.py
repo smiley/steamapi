@@ -592,7 +592,7 @@ def chunker(seq, size):
     :type size: int
     :rtype: iterable
     """
-    return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
+    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
 
 class _shims:
