@@ -10,3 +10,5 @@ install: pip install -r requirements.txt
 ## This is the ugliest form of testing but since this library doesn't have proper
 ## tests yet, this is the best way to test that it works on a basic level.
 script:  python -c "from steamapi import *"
+# Opt-in for the container-based environment
+sudo: false
