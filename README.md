@@ -11,19 +11,21 @@ It's super-easy to use, straightforward and designed for continuous use. Finally
 With some abstraction, Pythonic classes and ~~magic~~ tricks. Essentially, I use [*requests*](//github.com/kennethreitz/requests) for the actual communication, a few converter classes for parsing the output and making it a proper object, and some well-timed caching to make sure lazy-initialization doesn't get you down.
 
 ## How do I use this?
-Like this!
+Clone/[Download](/smiley/steamapi/archive/master.zip) (and extract) the repository & run `python setup.py install`. (Or `python setup.py develop` if you cloned the repository)
+
+Then, you can use it like this:
 ```python
 >>> import steamapi
->>> steamapi.core.APIConnection(api_key="ABCDEFGHIJKLMNOPQRSTUVWXYZ")
->>> steamapi.user.SteamUser(userurl="smileybarry") # For http://steamcommunity.com/id/smileybarry
+>>> steamapi.core.APIConnection(api_key="ABCDEFGHIJKLMNOPQRSTUVWXYZ")  # <-- Insert API key here
+>>> steamapi.user.SteamUser(userurl="smileybarry")  # For http://steamcommunity.com/id/smileybarry
 Or:
->>> steamapi.user.SteamUser(76561197996416028) # Using the 64-bit Steam user ID
+>>> steamapi.user.SteamUser(76561197996416028)  # Using the 64-bit Steam user ID
 <SteamUser "Smiley" (76561197996416028)>
 >>> me = _
 >>> me.level
 22
 >>> me.friends
-[<SteamUser "Ryan" (9876543210987654321)>, <SteamUser "Tyler" (1234876598762345)>, ...]
+[<SteamUser "Bill" (9876543210987654321)>, <SteamUser "Ted" (1234876598762345)>, ...]
 ```
 
 Or maybe even like this:
