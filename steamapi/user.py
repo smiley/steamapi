@@ -203,9 +203,9 @@ class SteamUser(SteamObject):
     @cached_property(ttl=INFINITE)
     def country_code(self):
         """
-        :rtype: str
+        :rtype: str or NoneType
         """
-        return getattr(self._summary, 'loccountrycode', "Unknown")
+        return getattr(self._summary, 'loccountrycode', None)
 
     @cached_property(ttl=10 * MINUTE)
     def currently_playing(self):
