@@ -203,9 +203,9 @@ class SteamUser(SteamObject):
     @cached_property(ttl=INFINITE)
     def country_code(self):
         """
-        :rtype: str
+        :rtype: str or NoneType
         """
-        return self._summary.loccountrycode
+        return getattr(self._summary, 'loccountrycode', None)
 
     @cached_property(ttl=10 * MINUTE)
     def currently_playing(self):
@@ -361,7 +361,7 @@ class SteamUser(SteamObject):
                                           badge.completion_time,
                                           badge.xp,
                                           badge.scarcity,
-                                          badge.appid)]
+                                          getattr(badge, 'appid', None))]
         return badge_list
 
     @property  # Already cached by "_badges".
