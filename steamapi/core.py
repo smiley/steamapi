@@ -243,6 +243,7 @@ class APIInterface(object):
         :param api_domain:
         :param settings: A dictionary which defines advanced settings.
         :type settings: dict
+        :param validate_key: Perform a test call to the API with the given key to ensure the key is valid & working.
         :return:
         """
         if autopopulate is False and strict is True:
@@ -388,7 +389,7 @@ class APIConnection(object):
                         a group of users, such as "friends", should precache player summaries,
                         like nicknames. Recommended if you plan to use nicknames right away, since
                         caching is done in groups and retrieving one-by-one takes a while.
-        :param validate_key: Perform a test call to the API with the given key to test its validity.
+        :param validate_key: Perform a test call to the API with the given key to ensure the key is valid & working.
 
         """
         self.reset(api_key)
