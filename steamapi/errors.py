@@ -87,7 +87,8 @@ class APIPrivate(APIFailure):
 
 class APIConfigurationError(APIFailure):
     """
-    There's either no APIConnection defined, or
+    There's either no APIConnection defined, or the parameters given to "APIConnection" or "APIInterface" are
+    invalid.
     """
     pass
 
@@ -98,19 +99,19 @@ def check(response):
     """
     if response.status_code // 100 == 4:
         if response.status_code == 404:
-            raise APINotFound()
+            raise APINotFound("The function or service you tried to call does not exist.")
         elif response.status_code == 401:
-            raise APIUnauthorized()
+            raise APIUnauthorized("This API is inaccessible to you.")
         elif response.status_code == 403:
             if '?key=' in response.request.url or '&key=' in response.request.url:
-                raise APIPrivate()
+                raise APIPrivate("You have no permission to use this API, or your key may be invalid.")
             else:
-                raise APIKeyRequired()
+                raise APIKeyRequired("This API requires a key to call.")
         elif response.status_code == 400:
-            raise APIBadCall()
+            raise APIBadCall("The parameters you sent didn't match this API's requirements.")
         else:
-            raise APIFailure()
+            raise APIFailure("Something is wrong with your configuration, parameters or environment.")
     elif response.status_code // 100 == 5:
-        raise APIError()
+        raise APIError("The API server has encountered an unknown error.")
     else:
         return

@@ -16,7 +16,7 @@ Clone/[Download](/smiley/steamapi/archive/master.zip) (and extract) the reposito
 Then, you can use it like this:
 ```python
 >>> import steamapi
->>> steamapi.core.APIConnection(api_key="ABCDEFGHIJKLMNOPQRSTUVWXYZ")  # <-- Insert API key here
+>>> steamapi.core.APIConnection(api_key="ABCDEFGHIJKLMNOPQRSTUVWXYZ", validate_key=True)  # <-- Insert API key here
 >>> steamapi.user.SteamUser(userurl="smileybarry")  # For http://steamcommunity.com/id/smileybarry
 Or:
 >>> steamapi.user.SteamUser(76561197996416028)  # Using the 64-bit Steam user ID

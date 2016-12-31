@@ -6,7 +6,7 @@ import time
 
 from .consts import API_CALL_DOCSTRING_TEMPLATE, API_CALL_PARAMETER_TEMPLATE, IPYTHON_PEEVES, IPYTHON_MODE
 from .decorators import Singleton, cached_property, INFINITE
-from .errors import APIException
+from .errors import APIException, APIUnauthorized, APIKeyRequired, APIPrivate, APIConfigurationError
 from . import errors
 
 GET = "GET"
@@ -226,7 +226,8 @@ class APICall(object):
 
 class APIInterface(object):
     def __init__(self, api_key=None, autopopulate=False, strict=False,
-                 api_domain="api.steampowered.com", api_protocol="http", settings=None):
+                 api_domain="api.steampowered.com", api_protocol="http", settings=None,
+                 validate_key=False):
         """
         Initialize a new APIInterface object. This object defines an API-interacting session, and is used to call
         any API functions from standard code.
@@ -285,6 +286,15 @@ class APIInterface(object):
                 self._autopopulate_interfaces()
             finally:
                 self.__dict__['_strict'] = original_strict_value
+        elif validate_key is True:
+            if api_key is None:
+                raise ValueError('"validate_key" is True, but no key was given.')
+            
+            # Call "GetSupportedAPIList", which is guaranteed to succeed with any valid key. (Or no key)
+            try:
+                self.ISteamWebAPIUtil.GetSupportedAPIList.v1(key=self._api_key)
+            except (APIUnauthorized, APIKeyRequired, APIPrivate):
+                raise APIConfigurationError("This API key is invalid.")
 
     def _autopopulate_interfaces(self):
         # Call the API which returns a list of API Services and Interfaces.
@@ -364,7 +374,7 @@ class APIConnection(object):
     # Use double curly-braces to tell Python that these variables shouldn't be expanded yet.
     QUERY_TEMPLATE = "{domain}/{{interface}}/{{command}}/{{version}}/".format(domain=QUERY_DOMAIN)
 
-    def __init__(self, api_key=None, settings={}):
+    def __init__(self, api_key=None, settings={}, validate_key=False):
         """
         NOTE: APIConnection will soon be made deprecated by APIInterface.
 
@@ -378,6 +388,7 @@ class APIConnection(object):
                         a group of users, such as "friends", should precache player summaries,
                         like nicknames. Recommended if you plan to use nicknames right away, since
                         caching is done in groups and retrieving one-by-one takes a while.
+        :param validate_key: Perform a test call to the API with the given key to test its validity.
 
         """
         self.reset(api_key)
@@ -386,6 +397,16 @@ class APIConnection(object):
 
         if 'precache' in settings and issubclass(type(settings['precache']), bool):
             self.precache = settings['precache']
+            
+        if validate_key:
+            if api_key is None:
+                raise ValueError('"validate_key" is True, but no key was given.')
+            
+            # Call "GetSupportedAPIList", which is guaranteed to succeed with any valid key. (Or no key)
+            try:
+                self.call("ISteamWebAPIUtil", "GetSupportedAPIList", "v1")
+            except (APIUnauthorized, APIKeyRequired, APIPrivate):
+                raise APIConfigurationError("This API key is invalid.")
 
     def reset(self, api_key):
         self._api_key = api_key
