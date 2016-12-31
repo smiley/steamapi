@@ -11,7 +11,7 @@ It's super-easy to use, straightforward and designed for continuous use. Finally
 With some abstraction, Pythonic classes and ~~magic~~ tricks. Essentially, I use [*requests*](//github.com/kennethreitz/requests) for the actual communication, a few converter classes for parsing the output and making it a proper object, and some well-timed caching to make sure lazy-initialization doesn't get you down.
 
 ## How do I use this?
-Clone/[Download](/smiley/steamapi/archive/master.zip) (and extract) the repository & run `python setup.py install`. (Or `python setup.py develop` if you cloned the repository)
+Clone the repository & run `python setup.py develop`. (Or [download](/smiley/steamapi/archive/master.zip) it & run `python setup.py install`, which copies the code to your local Python packages folder)
 
 Then, you can use it like this:
 ```python
