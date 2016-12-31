@@ -101,7 +101,7 @@ def check(response):
         if response.status_code == 404:
             raise APINotFound("The function or service you tried to call does not exist.")
         elif response.status_code == 401:
-            raise APIUnauthorized("This API is inaccessible to you.")
+            raise APIUnauthorized("This API is not accessible to you.")
         elif response.status_code == 403:
             if '?key=' in response.request.url or '&key=' in response.request.url:
                 raise APIPrivate("You have no permission to use this API, or your key may be invalid.")
