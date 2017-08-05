@@ -63,17 +63,21 @@ class cached_property(object):
 
     def __get__(self, inst, owner):
         now = time.time()
-        try:
-            value, last_update = inst._cache[self.__name__]
+        value, last_update = None, None
+        if not hasattr(inst, '_cache'):
+            inst._cache = {}
+
+        entry = inst._cache.get(self.__name__, None)
+        if entry is not None:
+            value, last_update = entry
             if now - last_update > self.ttl > 0:
-                raise AttributeError
-        except (KeyError, AttributeError):
+                entry = None
+
+        if entry is None:
             value = self.fget(inst)
-            try:
-                cache = inst._cache
-            except AttributeError:
-                cache = inst._cache = {}
+            cache = inst._cache
             cache[self.__name__] = (value, now)
+
         return value
 
 
