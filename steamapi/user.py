@@ -96,7 +96,7 @@ class SteamUser(SteamObject):
     PLAYER_SUMMARIES_BATCH_SIZE = 350
 
     # OVERRIDES
-    def __init__(self, userid=None, userurl=None):
+    def __init__(self, userid=None, userurl=None, accountid=None):
         """
         Create a new instance of a Steam user. Use this object to retrieve details about
         that user.
@@ -108,7 +108,7 @@ class SteamUser(SteamObject):
         :type userurl: str
         :raise: ValueError on improper usage.
         """
-        if userid is None and userurl is None:
+        if userid is None and userurl is None and accountid is None:
             raise ValueError("One of the arguments must be supplied.")
 
         if userurl is not None:
@@ -119,6 +119,9 @@ class SteamUser(SteamObject):
             if response.success != 1:
                 raise UserNotFoundError("User not found.")
             userid = response.steamid
+
+        if accountid is not None:
+            userid = self._convert_accountid_to_steamid(accountid)
 
         if userid is not None:
             self._id = int(userid)
@@ -140,6 +143,16 @@ class SteamUser(SteamObject):
         return hash(('user', self.id))
 
     # PRIVATE UTILITIES
+    @staticmethod
+    def _convert_accountid_to_steamid(accountid):
+        if accountid % 2 == 0:
+            y = 0
+            z = accountid / 2
+        else:
+            y = 1
+            z = (accountid - 1) / 2
+        return "7656119%d" % (z * 2 + 7960265728 + y)
+
     @staticmethod
     def _convert_games_list(raw_list, associated_userid=None):
         """
