@@ -479,3 +479,10 @@ class SteamUser(SteamObject):
         :rtype: str
         """
         return self._bans.EconomyBan
+
+    @cached_property(ttl=INFINITE)
+    def is_game_banned(self):
+        """
+        :rtype: bool
+        """
+        return self._bans.NumberOfGameBans != 0
