@@ -2,12 +2,14 @@
 
 from setuptools import setup
 
+
 def local_requirements():
     req_list = []
     with open('requirements.txt') as requirements_file:
         req_list = [line.strip() for line in requirements_file.readlines()]
     install_reqs = list(filter(None, req_list))
     return install_reqs
+
 
 setup(name='steamapi',
       version='0.1',
