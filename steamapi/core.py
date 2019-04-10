@@ -12,12 +12,13 @@ from . import errors
 GET = "GET"
 POST = "POST"
 
-# A mapping of all types accepted/required by the API to their Python equivalents.
-APITypes = {'bool':      bool,
-            'int32':     int,
-            'uint32':    int,
-            'uint64':    int,
-            'string':    [str],
+# A mapping of all types accepted/required by the API to their Python
+# equivalents.
+APITypes = {'bool': bool,
+            'int32': int,
+            'uint32': int,
+            'uint64': int,
+            'string': [str],
             'rawbinary': [str, bytes]}
 
 if sys.version_info.major < 3:
@@ -81,7 +82,8 @@ class APICall(object):
         if self._query != "":
             return self._query
 
-        # Build the query by calling "str" on ourselves, which recursively calls "str" on each parent in the chain.
+        # Build the query by calling "str" on ourselves, which recursively
+        # calls "str" on each parent in the chain.
         self._query = str(self)
         return self._query
 
@@ -89,7 +91,7 @@ class APICall(object):
         """
         Generate the function URL.
         """
-        if type(self._parent) is APIInterface:
+        if isinstance(self._parent, APIInterface):
             return self._parent._query_template + self._api_id + '/'
         else:
             return str(self._parent) + self._api_id + '/'
@@ -103,7 +105,8 @@ class APICall(object):
 
     def __repr__(self):
         if self._is_registered is True:
-            note = "(verified)"  # This is a registered, therefore working, API.
+            # This is a registered, therefore working, API.
+            note = "(verified)"
         else:
             note = "(unconfirmed)"
         return "<{cls} {full_name} {api_note}>".format(cls=self.__class__.__name__,
@@ -119,12 +122,14 @@ class APICall(object):
                 return super(APICall, self).__getattribute__(item)
             except AttributeError:
                 if IPYTHON_MODE is True:
-                    # We're in IPython. Which means "getdoc()" is also automatically used for docstrings!
+                    # We're in IPython. Which means "getdoc()" is also
+                    # automatically used for docstrings!
                     if item == "getdoc":
                         return lambda: self._api_documentation
                     elif item in IPYTHON_PEEVES:
                         # IPython always looks for this, no matter what (hiding it in __dir__ doesn't work), so this is
-                        # necessary to keep it from constantly making new APICall instances. (a significant slowdown)
+                        # necessary to keep it from constantly making new
+                        # APICall instances. (a significant slowdown)
                         raise
                 # Not an expected item, so generate a new APICall!
                 return APICall(item, self)
@@ -152,8 +157,9 @@ class APICall(object):
         if apicall_child is not None:
             if apicall_child._api_id in self.__dict__ \
                and apicall_child is not self.__dict__[apicall_child._api_id]:
-                raise KeyError("This API ID is already taken by another API function!")
-        if type(self._parent) is not APIInterface:
+                raise KeyError(
+                    "This API ID is already taken by another API function!")
+        if not isinstance(self._parent, APIInterface):
             self._parent._register(self)
         else:
             self._is_registered = True
@@ -247,16 +253,20 @@ class APIInterface(object):
         :return:
         """
         if autopopulate is False and strict is True:
-            raise ValueError("\"strict\" is only applicable if \"autopopulate\" is set to True.")
+            raise ValueError(
+                "\"strict\" is only applicable if \"autopopulate\" is set to True.")
 
         if api_protocol not in ("http", "https"):
-            raise ValueError("\"api_protocol\" must either be \"http\" or \"https\".")
+            raise ValueError(
+                "\"api_protocol\" must either be \"http\" or \"https\".")
 
         if '/' in api_domain:
-            raise ValueError("\"api_domain\" should only contain the domain name itself, without any paths or queries.")
+            raise ValueError(
+                "\"api_domain\" should only contain the domain name itself, without any paths or queries.")
 
         if issubclass(type(api_key), str) and len(api_key) == 0:
-            # We were given an empty key (== no key), but the API's equivalent of "no key" is None.
+            # We were given an empty key (== no key), but the API's equivalent
+            # of "no key" is None.
             api_key = None
 
         if settings is None:
@@ -266,7 +276,8 @@ class APIInterface(object):
         super_self = super(type(self), self)
 
         # Initialization routines must use the original __setattr__ function, because they might collide with the
-        # overridden "__setattr__", which expects a fully-built instance to exist before being called.
+        # overridden "__setattr__", which expects a fully-built instance to
+        # exist before being called.
         def set_attribute(name, value):
             return super_self.__setattr__(name, value)
 
@@ -274,13 +285,16 @@ class APIInterface(object):
         set_attribute('_strict', strict)
         set_attribute('_settings', settings)
 
-        query_template = "{proto}://{domain}/".format(proto=api_protocol, domain=api_domain)
+        query_template = "{proto}://{domain}/".format(
+            proto=api_protocol, domain=api_domain)
         set_attribute('_query_template', query_template)
 
         if autopopulate is True:
-            # TODO: Autopopulation should be long-term-cached somewhere for future use, since it won't change much.
+            # TODO: Autopopulation should be long-term-cached somewhere for
+            # future use, since it won't change much.
 
-            # Regardless of "strict mode", it has to be OFF during auto-population.
+            # Regardless of "strict mode", it has to be OFF during
+            # auto-population.
             original_strict_value = self._strict
             try:
                 self.__dict__['_strict'] = False
@@ -289,9 +303,11 @@ class APIInterface(object):
                 self.__dict__['_strict'] = original_strict_value
         elif validate_key is True:
             if api_key is None:
-                raise ValueError('"validate_key" is True, but no key was given.')
-            
-            # Call "GetSupportedAPIList", which is guaranteed to succeed with any valid key. (Or no key)
+                raise ValueError(
+                    '"validate_key" is True, but no key was given.')
+
+            # Call "GetSupportedAPIList", which is guaranteed to succeed with
+            # any valid key. (Or no key)
             try:
                 self.ISteamWebAPIUtil.GetSupportedAPIList.v1(key=self._api_key)
             except (APIUnauthorized, APIKeyRequired, APIPrivate):
@@ -299,21 +315,28 @@ class APIInterface(object):
 
     def _autopopulate_interfaces(self):
         # Call the API which returns a list of API Services and Interfaces.
-        # API definitions describe how the Interfaces and Services are built up, including parameter names & types.
-        api_definition = self.ISteamWebAPIUtil.GetSupportedAPIList.v1(key=self._api_key)
+        # API definitions describe how the Interfaces and Services are built
+        # up, including parameter names & types.
+        api_definition = self.ISteamWebAPIUtil.GetSupportedAPIList.v1(
+            key=self._api_key)
 
         for interface in api_definition.apilist.interfaces:
             interface_object = APICall(interface.name, self)
-            parameter_description = API_CALL_PARAMETER_TEMPLATE.format(indent='\t')
+            parameter_description = API_CALL_PARAMETER_TEMPLATE.format(
+                indent='\t')
 
             for method in interface.methods:
                 if method.name in interface_object:
-                    base_method_object = interface_object.__getattribute__(method.name)
+                    base_method_object = interface_object.__getattribute__(
+                        method.name)
                 else:
-                    base_method_object = APICall(method.name, interface_object, method.httpmethod)
+                    base_method_object = APICall(
+                        method.name, interface_object, method.httpmethod)
                 # API calls have version-specific definitions, so backwards compatibility could be maintained.
-                # However, the Web API returns versions as integers (1, 2, etc.) but accepts them as "v?" (v1, v2, etc.)
-                method_object = APICall('v' + str(method.version), base_method_object, method.httpmethod)
+                # However, the Web API returns versions as integers (1, 2,
+                # etc.) but accepts them as "v?" (v1, v2, etc.)
+                method_object = APICall(
+                    'v' + str(method.version), base_method_object, method.httpmethod)
 
                 parameters = []
                 for parameter in method.parameters:
@@ -351,7 +374,8 @@ class APIInterface(object):
             return super(type(self), self).__getattribute__(name)
         elif name in IPYTHON_PEEVES:
             # IPython always looks for this, no matter what (hiding it in __dir__ doesn't work), so this is
-            # necessary to keep it from constantly making new APICall instances. (a significant slowdown)
+            # necessary to keep it from constantly making new APICall
+            # instances. (a significant slowdown)
             raise AttributeError()
         else:
             if self._strict is True:
@@ -364,7 +388,8 @@ class APIInterface(object):
 
     def __setattr__(self, name, value):
         if self._strict is True:
-            raise AttributeError("Cannot set attributes to a strict '{cls}' object.".format(cls=type(self).__name__))
+            raise AttributeError("Cannot set attributes to a strict '{cls}' object.".format(
+                cls=type(self).__name__))
         else:
             return super(type(self), self).__setattr__(name, value)
 
@@ -372,8 +397,10 @@ class APIInterface(object):
 @Singleton
 class APIConnection(object):
     QUERY_DOMAIN = "http://api.steampowered.com"
-    # Use double curly-braces to tell Python that these variables shouldn't be expanded yet.
-    QUERY_TEMPLATE = "{domain}/{{interface}}/{{command}}/{{version}}/".format(domain=QUERY_DOMAIN)
+    # Use double curly-braces to tell Python that these variables shouldn't be
+    # expanded yet.
+    QUERY_TEMPLATE = "{domain}/{{interface}}/{{command}}/{{version}}/".format(
+        domain=QUERY_DOMAIN)
 
     def __init__(self, api_key=None, settings={}, validate_key=False):
         """
@@ -396,14 +423,17 @@ class APIConnection(object):
 
         self.precache = True
 
-        if 'precache' in settings and issubclass(type(settings['precache']), bool):
+        if 'precache' in settings and issubclass(
+                type(settings['precache']), bool):
             self.precache = settings['precache']
-            
+
         if validate_key:
             if api_key is None:
-                raise ValueError('"validate_key" is True, but no key was given.')
-            
-            # Call "GetSupportedAPIList", which is guaranteed to succeed with any valid key. (Or no key)
+                raise ValueError(
+                    '"validate_key" is True, but no key was given.')
+
+            # Call "GetSupportedAPIList", which is guaranteed to succeed with
+            # any valid key. (Or no key)
             try:
                 self.call("ISteamWebAPIUtil", "GetSupportedAPIList", "v1")
             except (APIUnauthorized, APIKeyRequired, APIPrivate):
@@ -429,11 +459,11 @@ class APIConnection(object):
         :rtype: APIResponse
         """
         for argument in kwargs:
-            if type(kwargs[argument]) is list:
+            if isinstance(kwargs[argument], list):
                 # The API takes multiple values in a "a,b,c" structure, so we
                 # have to encode it in that way.
                 kwargs[argument] = ','.join(kwargs[argument])
-            elif type(kwargs[argument]) is bool:
+            elif isinstance(kwargs[argument], bool):
                 # The API treats True/False as 1/0. Convert it.
                 if kwargs[argument] is True:
                     kwargs[argument] = 1
@@ -449,7 +479,8 @@ class APIConnection(object):
         if self._api_key is not None:
             kwargs["key"] = self._api_key
 
-        query = self.QUERY_TEMPLATE.format(interface=interface, command=command, version=version)
+        query = self.QUERY_TEMPLATE.format(
+            interface=interface, command=command, version=version)
 
         if method == POST:
             response = requests.request(method, query, data=kwargs)
@@ -480,10 +511,11 @@ class APIResponse(object):
         self._real_dictionary = {}
         # Recursively wrap the response in APIResponse instances.
         for item in father_dict:
-            if type(father_dict[item]) is dict:
+            if isinstance(father_dict[item], dict):
                 self._real_dictionary[item] = APIResponse(father_dict[item])
-            elif type(father_dict[item]) is list:
-                self._real_dictionary[item] = APIResponse._wrap_list(father_dict[item])
+            elif isinstance(father_dict[item], list):
+                self._real_dictionary[item] = APIResponse._wrap_list(
+                    father_dict[item])
             else:
                 self._real_dictionary[item] = father_dict[item]
 
@@ -500,9 +532,9 @@ class APIResponse(object):
         """
         new_list = []
         for item in original_list:
-            if type(item) is dict:
+            if isinstance(item, dict):
                 new_list += [APIResponse(item)]
-            elif type(item) is list:
+            elif isinstance(item, list):
                 new_list += [APIResponse._wrap_list(item)]
             else:
                 new_list += [item]
@@ -544,17 +576,20 @@ class SteamObject(object):
     def __repr__(self):
         try:
             return '<{clsname} "{name}" ({id})>'.format(clsname=self.__class__.__name__,
-                                                        name=_shims.sanitize_for_console(self.name),
+                                                        name=_shims.sanitize_for_console(
+                                                            self.name),
                                                         id=self._id)
         except (AttributeError, APIException):
-            return '<{clsname} ({id})>'.format(clsname=self.__class__.__name__, id=self._id)
+            return '<{clsname} ({id})>'.format(
+                clsname=self.__class__.__name__, id=self._id)
 
     def __eq__(self, other):
         """
         :type other: SteamObject
         """
         # Use a "hash" of each object to prevent cases where derivative classes sharing the
-        # same ID, like a user and an app, would cause a match if compared using ".id".
+        # same ID, like a user and an app, would cause a match if compared
+        # using ".id".
         return hash(self) == hash(other)
 
     def __ne__(self, other):
@@ -586,7 +621,8 @@ def store(obj, property_name, data, received_time=0):
     if issubclass(type(obj), SteamObject) or hasattr(obj, "_cache"):
         obj._cache[property_name] = (data, received_time)
     else:
-        raise TypeError("This object type either doesn't visibly support caching, or has yet to initialise its cache.")
+        raise TypeError(
+            "This object type either doesn't visibly support caching, or has yet to initialise its cache.")
 
 
 def expire(obj, property_name):
@@ -601,7 +637,8 @@ def expire(obj, property_name):
     if issubclass(type(obj), SteamObject) or hasattr(obj, "_cache"):
         del obj._cache[property_name]
     else:
-        raise TypeError("This object type either doesn't visibly support caching, or has yet to initialise its cache.")
+        raise TypeError(
+            "This object type either doesn't visibly support caching, or has yet to initialise its cache.")
 
 
 def chunker(seq, size):

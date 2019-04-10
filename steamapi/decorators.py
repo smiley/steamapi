@@ -13,6 +13,7 @@ class debug(object):
             raise AssertionError("No-return function returned.")
         return callNoReturn
 
+
 MINUTE = 60
 HOUR = 60 * MINUTE
 INFINITE = 0
@@ -51,6 +52,7 @@ class cached_property(object):
         del instance._cache[<property name>]
 
     """
+
     def __init__(self, ttl=300):
         self.ttl = ttl
 

@@ -3,7 +3,8 @@ __author__ = 'SmileyBarry'
 
 class Enum(object):
     def __init__(self):
-        raise TypeError("Enums cannot be instantiated, use their attributes instead")
+        raise TypeError(
+            "Enums cannot be instantiated, use their attributes instead")
 
 
 class CommunityVisibilityState(Enum):
@@ -23,9 +24,11 @@ class OnlineState(Enum):
     LOOKING_TO_TRADE = 5
     LOOKING_TO_PLAY = 6
 
+
 try:
     get_ipython
-    # We're inside IPython. Define all of IPython's custom function/method names so we could special-case them.
+    # We're inside IPython. Define all of IPython's custom function/method
+    # names so we could special-case them.
     IPYTHON_PEEVES = ["trait_names", "getdoc"]
     IPYTHON_MODE = True
 except NameError:
@@ -36,7 +39,7 @@ except NameError:
 
 # Unindented so that the docstring won't be overly indented.
 API_CALL_DOCSTRING_TEMPLATE = \
-"""
+    """
 {name}
 
 Parameters:

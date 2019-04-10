@@ -11,7 +11,8 @@ import itertools
 
 
 class SteamUserBadge(SteamObject):
-    def __init__(self, badge_id, level, completion_time, xp, scarcity, appid=None):
+    def __init__(self, badge_id, level, completion_time,
+                 xp, scarcity, appid=None):
         """
         Create a new instance of a Steam user badge. You usually shouldn't initialise this object,
         but instead receive it from properties like "SteamUser.badges".
@@ -33,10 +34,11 @@ class SteamUserBadge(SteamObject):
         """
         self._badge_id = badge_id
         self._level = level
-        if type(completion_time) is datetime.datetime:
+        if isinstance(completion_time, datetime.datetime):
             self._completion_time = completion_time
         else:
-            self._completion_time = datetime.datetime.fromtimestamp(completion_time)
+            self._completion_time = datetime.datetime.fromtimestamp(
+                completion_time)
         self._xp = xp
         self._scarcity = scarcity
         self._appid = appid
@@ -75,7 +77,8 @@ class SteamUserBadge(SteamObject):
                                                    xp=self._xp)
 
     def __hash__(self):
-        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        # Don't just use the ID so ID collision between different types of
+        # objects wouldn't cause a match.
         return hash((self._appid, self.id))
 
 
@@ -84,7 +87,8 @@ class SteamGroup(SteamObject):
         self._id = guid
 
     def __hash__(self):
-        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        # Don't just use the ID so ID collision between different types of
+        # objects wouldn't cause a match.
         return hash(('group', self.id))
 
     @property
@@ -114,8 +118,10 @@ class SteamUser(SteamObject):
         if userurl is not None:
             if '/' in userurl:
                 # This is a full URL. It's not valid.
-                raise ValueError("\"userurl\" must be the *ending* of a vanity URL, not the entire URL!")
-            response = APIConnection().call("ISteamUser", "ResolveVanityURL", "v0001", vanityurl=userurl)
+                raise ValueError(
+                    "\"userurl\" must be the *ending* of a vanity URL, not the entire URL!")
+            response = APIConnection().call(
+                "ISteamUser", "ResolveVanityURL", "v0001", vanityurl=userurl)
             if response.success != 1:
                 raise UserNotFoundError("User not found.")
             userid = response.steamid
@@ -127,7 +133,7 @@ class SteamUser(SteamObject):
             self._id = int(userid)
 
     def __eq__(self, other):
-        if type(other) is SteamUser:
+        if isinstance(other, SteamUser):
             if self.steamid == other.steamid:
                 return True
             else:
@@ -139,7 +145,8 @@ class SteamUser(SteamObject):
         return self.name
 
     def __hash__(self):
-        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        # Don't just use the ID so ID collision between different types of
+        # objects wouldn't cause a match.
         return hash(('user', self.id))
 
     # PRIVATE UTILITIES
@@ -179,14 +186,16 @@ class SteamUser(SteamObject):
         """
         :rtype: APIResponse
         """
-        return APIConnection().call("ISteamUser", "GetPlayerSummaries", "v0002", steamids=self.steamid).players[0]
+        return APIConnection().call("ISteamUser", "GetPlayerSummaries",
+                                    "v0002", steamids=self.steamid).players[0]
 
     @cached_property(ttl=INFINITE)
     def _bans(self):
         """
         :rtype: APIResponse
         """
-        return APIConnection().call("ISteamUser", "GetPlayerBans", "v1", steamids=self.steamid).players[0]
+        return APIConnection().call("ISteamUser", "GetPlayerBans",
+                                    "v1", steamids=self.steamid).players[0]
 
     @cached_property(ttl=30 * MINUTE)
     def _badges(self):
@@ -311,7 +320,8 @@ class SteamUser(SteamObject):
         """
         :rtype: list of SteamGroup
         """
-        response = APIConnection().call("ISteamUser", "GetUserGroupList", "v1", steamid=self.steamid)
+        response = APIConnection().call(
+            "ISteamUser", "GetUserGroupList", "v1", steamid=self.steamid)
         group_list = []
         for group in response.groups:
             group_obj = SteamGroup(group.gid)
@@ -359,7 +369,8 @@ class SteamUser(SteamObject):
             now = time.time()
             for player_summary in player_details:
                 # Fill in the cache with this info.
-                id_player_map[player_summary.steamid]._cache["_summary"] = (player_summary, now)
+                id_player_map[player_summary.steamid]._cache["_summary"] = (
+                    player_summary, now)
         return friends_list
 
     @property  # Already cached by "_badges".
@@ -396,7 +407,8 @@ class SteamUser(SteamObject):
         """
         :rtype: list of SteamApp
         """
-        response = APIConnection().call("IPlayerService", "GetRecentlyPlayedGames", "v1", steamid=self.steamid)
+        response = APIConnection().call(
+            "IPlayerService", "GetRecentlyPlayedGames", "v1", steamid=self.steamid)
         if 'total_count' not in response:
             # Private profiles will cause a special response, where the API doesn't tell us if there are
             # any results *at all*. We just get a blank JSON document.
@@ -449,30 +461,35 @@ class SteamUser(SteamObject):
         :rtype: bool
         """
         return self._bans.VACBanned
+
     @cached_property(ttl=INFINITE)
     def is_community_banned(self):
         """
         :rtype: bool
         """
         return self._bans.CommunityBanned
+
     @cached_property(ttl=INFINITE)
     def number_of_vac_bans(self):
         """
         :rtype: int
         """
         return self._bans.NumberOfVACBans
+
     @cached_property(ttl=INFINITE)
     def days_since_last_ban(self):
         """
         :rtype: int
         """
         return self._bans.DaysSinceLastBan
+
     @cached_property(ttl=INFINITE)
     def number_of_game_bans(self):
         """
         :rtype: int
         """
         return self._bans.NumberOfGameBans
+
     @cached_property(ttl=INFINITE)
     def economy_ban(self):
         """

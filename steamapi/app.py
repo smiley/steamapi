@@ -35,7 +35,8 @@ class SteamApp(SteamObject):
         """
         if 'appid' not in api_json:
             # An app ID is a bare minimum.
-            raise ValueError("An app ID is required to create a SteamApp object.")
+            raise ValueError(
+                "An app ID is required to create a SteamApp object.")
 
         appid = api_json.appid
         name = None
@@ -76,7 +77,8 @@ class SteamApp(SteamObject):
             # No stat data -- at all. This is a hidden app.
             return achievements_list
         for achievement in self._schema.game.availableGameStats.achievements:
-            achievement_obj = SteamAchievement(self._id, achievement.name, achievement.displayName, userid)
+            achievement_obj = SteamAchievement(
+                self._id, achievement.name, achievement.displayName, userid)
             achievement_obj._cache = {}
             if achievement.hidden == 0:
                 store(achievement_obj, "is_hidden", False)
@@ -112,7 +114,8 @@ class SteamApp(SteamObject):
         return self.name
 
     def __hash__(self):
-        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        # Don't just use the ID so ID collision between different types of
+        # objects wouldn't cause a match.
         return hash(('app', self.id))
 
 
@@ -139,7 +142,8 @@ class SteamAchievement(SteamObject):
         self.unlock_percentage = 0.0
 
     def __hash__(self):
-        # Don't just use the ID so ID collision between different types of objects wouldn't cause a match.
+        # Don't just use the ID so ID collision between different types of
+        # objects wouldn't cause a match.
         return hash((self.id, self._appid))
 
     @property
