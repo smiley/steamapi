@@ -1,6 +1,6 @@
 SteamAPI [![Build Status](https://travis-ci.org/smiley/steamapi.svg?branch=master)](https://travis-ci.org/smiley/steamapi)
 ========
-An object-oriented Python 2.7+ library for accessing the Steam Web API.
+An object-oriented Python 2.7+/3.5+ library for accessing the Steam Web API.
 
 ## What's this?
 It's a Python library for accessing Steam's [Web API](http://steamcommunity.com/dev), which separates the JSON, HTTP requests, authentication and other web junk from your Python code. Your code will still ask the Steam Web API for bits and bobs of user profiles, games, etc., but invisibly, lazily, and in a cached manner.
