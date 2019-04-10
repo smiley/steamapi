@@ -167,6 +167,10 @@ class SteamUser(SteamObject):
                 game_obj.playtime_2weeks = game.playtime_2weeks
             if 'playtime_forever' in game:
                 game_obj.playtime_forever = game.playtime_forever
+            if 'img_logo_url' in game:
+                game_obj.img_logo_url = game.img_logo_url
+            if 'img_icon_url' in game:
+                game_obj.img_icon_url = game.img_icon_url
             games_list += [game_obj]
         return games_list
 
@@ -445,7 +449,6 @@ class SteamUser(SteamObject):
         :rtype: bool
         """
         return self._bans.VACBanned
-
     @cached_property(ttl=INFINITE)
     def is_community_banned(self):
         """
