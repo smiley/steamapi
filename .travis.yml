@@ -1,21 +1,22 @@
 dist: xenial
 language: python
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
-  - "3.7"
-install:
-  - pip install -r requirements.txt
-  - pip install pycodestyle
 jobs:
   include:
     - stage: test
       name: "Sanity"
+      python:
+        - "2.7"
+        - "3.5"
+        - "3.6"
+        - "3.7"
+      install: pip install -r requirements.txt
       # This is the ugliest form of testing but since this library doesn't have proper
       # tests yet, this is the best way to test that it works on a basic level.
       script: python -c "from steamapi import *"
     - stage: "Code Quality"
+      install:
+        - pip install -r requirements.txt
+        - pip install pycodestyle
       name: "PEP-8"
       python: "3.7"
       script: python -m pycodestyle --ignore=E501,E741 .
