@@ -103,6 +103,4 @@ No, and it's also not endorsed in any way by Valve Corporation. _(obligatory leg
 No, but feel free to experiment with it. It's roughly stable right now, with many of the quirks fixed and most classes having a steady API. Small refactorings are rare, and I do plan to overhaul the object system to allow async/batching behaviour, but that's still a way off.
 
 ### Is this still actively-developed? The last commit is quite a while ago!
-Yes, but less than before. This is a side-project, and sadly work has become hectic enough that I have less time and energy to work on this & other side-projects.
-
-That doesn't mean I'm not working on it at all, but it does mean development's gotten slower.
+Sadly, not anymore. This isn't abandoned or archived but, as you can tell, I haven't touched it in years. I've moved on and the projects I had in mind for this library (and the reason I wrote it) are dead at this point. If you'd like to add or change things, you can fork the repository and open a pull request, despite the above I can still review and accept changes.
