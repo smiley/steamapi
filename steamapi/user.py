@@ -250,7 +250,7 @@ class SteamUser(SteamObject):
             owner = APIConnection().call("IPlayerService", "IsPlayingSharedGame", "v0001",
                                          steamid=self._id,
                                          appid_playing=game.appid)
-            if owner.lender_steamid is not 0:
+            if owner.lender_steamid != 0:
                 game._owner = owner.lender_steamid
             return game
         else:
